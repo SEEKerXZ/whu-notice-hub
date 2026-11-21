@@ -48,6 +48,40 @@ def _days_left(value: object) -> int | None:
 templates.env.filters["cat_class"] = _cat_class
 templates.env.filters["days_left"] = _days_left
 
+# 重要度只展示大类，不显示具体分数
+LEVELS: list[tuple[int, str, str]] = [
+    (60, "重要", "lv-hi"),
+    (40, "一般", "lv-mid"),
+    (0, "参考", "lv-low"),
+]
+LEVEL_TO_MIN_SCORE = {"high": 60, "mid": 40, "low": 0}
+
+
+def _level_label(score: object) -> str:
+    try:
+        s = int(score or 0)
+    except (TypeError, ValueError):
+        s = 0
+    for threshold, label, _cls in LEVELS:
+        if s >= threshold:
+            return label
+    return "参考"
+
+
+def _level_class(score: object) -> str:
+    try:
+        s = int(score or 0)
+    except (TypeError, ValueError):
+        s = 0
+    for threshold, _label, cls in LEVELS:
+        if s >= threshold:
+            return cls
+    return "lv-low"
+
+
+templates.env.filters["level_label"] = _level_label
+templates.env.filters["level_class"] = _level_class
+
 app = FastAPI(title="WHU Notice Hub", version="0.1.0",
               description="武汉大学本科生通知聚合 · 公开只读服务")
 
@@ -169,7 +203,8 @@ def _list_response(request: Request, *, page_title: str, base_path: str,
                    source: str | None = None, category: str | None = None,
                    q: str | None = None, min_score: int | None = None,
                    deadline: int = 0, month: str | None = None,
-                   page: int = 1, size: int = 30, show_overview: bool = False):
+                   page: int = 1, size: int = 30, show_overview: bool = False,
+                   level: str | None = None):
     page = max(1, page)
     conn = _conn()
     try:
@@ -188,7 +223,7 @@ def _list_response(request: Request, *, page_title: str, base_path: str,
 
     filters = {"source": source or "", "category": category or "",
                "q": q or "", "min_score": min_score or "",
-               "deadline": deadline, "month": month or ""}
+               "deadline": deadline, "month": month or "", "level": level or ""}
     return templates.TemplateResponse(request, "index.html", {
         "items": items, "sources": sources, "categories": categories,
         "total": total, "overview": overview, "filters": filters,
@@ -202,15 +237,16 @@ def _list_response(request: Request, *, page_title: str, base_path: str,
 # ---------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, source: str | None = None, category: str | None = None,
-          q: str | None = None, min_score: int | None = None, deadline: int = 0,
-          page: int = 1, size: int = 30):
+          q: str | None = None, level: str | None = None, min_score: int | None = None,
+          deadline: int = 0, page: int = 1, size: int = 30):
     title = "全部通知"
     if q:
         title = f"搜索：{q}"
+    min_score = LEVEL_TO_MIN_SCORE.get((level or "").lower(), min_score)
     return _list_response(
         request, page_title=title, base_path="/",
         source=source, category=category, q=q, min_score=min_score,
-        deadline=deadline, page=page, size=size,
+        deadline=deadline, page=page, size=size, level=level,
         show_overview=not any([source, category, q, min_score, deadline]),
     )
 
@@ -338,6 +374,7 @@ def api_notices(source: str | None = None, category: str | None = None,
         )
         data = [dict(r) for r in rows]
         for item in data:
+            item["level"] = _level_label(item.get("importance"))
             for key in ("audience_json", "action_items_json"):
                 try:
                     item[key] = json.loads(item.get(key) or "[]")

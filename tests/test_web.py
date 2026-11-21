@@ -68,6 +68,19 @@ def test_index_filter(client):
     assert "仅看有截止日期" in client.get("/").text
 
 
+def test_importance_levels_not_numbers(client):
+    html = client.get("/").text
+    # 页面上只出现"重要/一般/参考"这类文字等级，不再显示具体分数
+    assert "level" in html
+    assert "重要" in html
+    assert 'type="number"' not in html
+
+
+def test_level_filter(client):
+    for level in ("high", "mid", "low"):
+        assert client.get(f"/?level={level}").status_code == 200
+
+
 def test_category_page(client):
     resp = client.get("/category/" + quote("教务"))
     assert resp.status_code == 200

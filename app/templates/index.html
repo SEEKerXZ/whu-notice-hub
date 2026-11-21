@@ -23,7 +23,7 @@
     {% for n in overview.important %}
       <a class="imp-card {% if n.importance >= 70 %}lv3{% elif n.importance >= 60 %}lv2{% else %}lv1{% endif %}" href="/notice/{{ n.id }}">
         <div class="imp-meta">
-          <span class="score {% if n.importance >= 85 %}s-hi{% elif n.importance >= 65 %}s-mid{% else %}s-low{% endif %}">{{ n.importance }}</span>
+          <span class="level {{ n.importance|level_class }}">{{ n.importance|level_label }}</span>
           <span class="tag {{ n.category|cat_class }}"><span class="dot"></span>{{ n.category }}</span>
           <span>{{ n.published_at or '' }}</span>
         </div>
@@ -67,10 +67,15 @@
     {% endfor %}
   </select>
   <input type="text" name="q" value="{{ filters.q }}" placeholder="搜索标题或正文…">
-  <input type="number" name="min_score" value="{{ filters.min_score }}" placeholder="最低重要度" min="0" max="100">
+  <select name="level">
+    <option value="">全部重要度</option>
+    <option value="high" {% if filters.level == 'high' %}selected{% endif %}>仅看重要</option>
+    <option value="mid" {% if filters.level == 'mid' %}selected{% endif %}>一般及以上</option>
+    <option value="low" {% if filters.level == 'low' %}selected{% endif %}>全部（含参考）</option>
+  </select>
   <label class="chk"><input type="checkbox" name="deadline" value="1" {% if filters.deadline %}checked{% endif %}> 仅看有截止日期</label>
   <button class="btn" type="submit">筛选</button>
-  {% if filters.source or filters.category or filters.q or filters.min_score or filters.deadline %}
+  {% if filters.source or filters.category or filters.q or filters.level or filters.deadline %}
     <a class="btn ghost" href="/">重置</a>
   {% endif %}
 </form>
@@ -84,7 +89,7 @@
   <article class="item">
     <h2 class="item-title"><a href="/notice/{{ n.id }}">{{ n.title }}</a></h2>
     <div class="meta">
-      <span class="score {% if n.importance >= 80 %}s-hi{% elif n.importance >= 60 %}s-mid{% else %}s-low{% endif %}">{{ n.importance }}</span>
+      <span class="level {{ n.importance|level_class }}">{{ n.importance|level_label }}</span>
       <a class="tag {{ n.category|cat_class }}" href="/category/{{ n.category|urlencode }}"><span class="dot"></span>{{ n.category }}</a>
       {% if n.restricted %}<span class="tag locked">🔒 仅校内</span>{% endif %}
       <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a>
@@ -109,11 +114,11 @@
 
 <div class="pager">
   {% if page > 1 %}
-    <a href="{{ base_path }}?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'min_score': filters.min_score, 'deadline': filters.deadline, 'page': page-1}|urlencode }}">← 上一页</a>
+    <a href="{{ base_path }}?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'level': filters.level, 'deadline': filters.deadline, 'page': page-1}|urlencode }}">← 上一页</a>
   {% else %}<span class="off">← 上一页</span>{% endif %}
   <span class="pos">第 {{ page }} 页</span>
   {% if has_next %}
-    <a href="{{ base_path }}?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'min_score': filters.min_score, 'deadline': filters.deadline, 'page': page+1}|urlencode }}">下一页 →</a>
+    <a href="{{ base_path }}?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'level': filters.level, 'deadline': filters.deadline, 'page': page+1}|urlencode }}">下一页 →</a>
   {% else %}<span class="off">下一页 →</span>{% endif %}
 </div>
 {% endblock %}

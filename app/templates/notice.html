@@ -10,7 +10,7 @@
 
 <article class="article">
   <div class="detail-meta">
-    <span class="score {% if n.importance >= 80 %}s-hi{% elif n.importance >= 60 %}s-mid{% else %}s-low{% endif %}">{{ n.importance }}</span>
+    <span class="level {{ n.importance|level_class }}">{{ n.importance|level_label }}</span>
     <a class="tag {{ n.category|cat_class }}" href="/category/{{ n.category|urlencode }}"><span class="dot"></span>{{ n.category }}</a>
     {% if n.restricted %}<span class="tag locked">🔒 仅校内可见</span>{% endif %}
     <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a>
