@@ -1,57 +1,100 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
+{% block title %}关于 · WHU Notice Hub{% endblock %}
 {% block content %}
 <div class="crumbs"><a href="/">首页</a><span>/</span><span>关于</span></div>
-<div class="page-head"><h1>关于这个站点</h1></div>
+<div class="page-head"><h1>关于这个站点</h1><span class="count">v1.0.0</span></div>
+
+<section class="hero" style="margin-top:6px">
+  <div class="hero-eyebrow">About</div>
+  <div class="hero-title" style="font-size:23px">把分散的武大通知，收进一个页面</div>
+  <p style="color:var(--fg-2);font-size:14px;margin:10px 0 0;line-height:1.8">
+    WHU Notice Hub 是一个面向<strong>武汉大学本科生</strong>的非官方通知聚合站。
+    官网、信息公开网、计算机学院等多个站点每天发布大量通知，真正和自己有关的那几条，往往会淹没在公示、会议通知和讲座预告里。
+    这个站点做的事情很简单：<strong>定时抓取这些公开栏目 → 过滤掉与本科生无关的内容 → 按重要度分档展示 → 一键跳到原文</strong>。
+  </p>
+  <p style="color:var(--fg-2);font-size:14px;margin:8px 0 0;line-height:1.8">
+    只做<strong>标题 + 概览 + 原文链接</strong>：不转载正文与附件，既能快速浏览，也避免版权与个人信息问题。
+    需要细节时点开原文即可，一切以官网为准。
+  </p>
+</section>
 
 <div class="prose">
-  <p>
-    WHU Notice Hub 是一个非官方的本科生通知聚合站：定时抓取武汉大学官网、计算机学院、信息公开网等公开栏目，
-    自动去重、识别适用对象、抽取截止日期，并按重要度排序，方便快速了解"最近有什么和我有关的事"。
-  </p>
+  <h2>制作人</h2>
+  <div class="panel" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+                background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;font-weight:800;font-size:16px">S</div>
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:15px;font-weight:700">SEEKers</div>
+      <div style="font-size:12.5px;color:var(--muted)">
+        武汉大学在校本科生 · 独立开发与维护
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a class="btn ghost" href="https://github.com/SEEKerXZ/whu-notice-hub" target="_blank" rel="noopener">GitHub 仓库 ↗</a>
+      <a class="btn ghost" href="mailto:githubseeker@163.com">联系我</a>
+    </div>
+  </div>
 
-  <h2>本站提供什么</h2>
-  <p>
-    只做<strong>标题 + 概览 + 原文链接</strong>：不转载正文、不存附件。这样既能快速浏览，
-    也不会因为复制内容产生版权或隐私问题；需要细节时点"查看原文"即可。
-  </p>
-
-  <h2>数据来源</h2>
+  <h2>信息来自哪些网站</h2>
+  <p>目前接入 6 个公开栏目，均为各站点对外公开的通知列表页：</p>
   <table class="src">
-    <tr><th>信源</th><th>条数</th><th></th></tr>
+    <tr><th>站点 / 栏目</th><th>入口</th><th>条数</th><th></th></tr>
     {% for s in sources %}
       <tr>
         <td>{{ s.name }}</td>
+        <td>
+          {% if s.code == 'whu_main' %}
+            <a href="https://www.whu.edu.cn/tzgg.htm" target="_blank" rel="noopener">whu.edu.cn/tzgg</a>
+          {% elif s.code == 'whu_info_public' %}
+            <a href="https://info.whu.edu.cn/gz/zxgk.htm" target="_blank" rel="noopener">info.whu.edu.cn</a>
+          {% elif s.code == 'cs_whu' %}
+            <a href="https://cs.whu.edu.cn/xwdt/tzgg.htm" target="_blank" rel="noopener">cs.whu.edu.cn/xwdt/tzgg</a>
+          {% elif s.code == 'cs_ug' %}
+            <a href="https://cs.whu.edu.cn/rcpy/bksjy.htm" target="_blank" rel="noopener">cs.whu.edu.cn/rcpy/bksjy</a>
+          {% elif s.code == 'cs_youth' %}
+            <a href="https://cs.whu.edu.cn/dqgz/gqtgz.htm" target="_blank" rel="noopener">cs.whu.edu.cn/dqgz/gqtgz</a>
+          {% elif s.code == 'cs_party' %}
+            <a href="https://cs.whu.edu.cn/dqgz/djgz.htm" target="_blank" rel="noopener">cs.whu.edu.cn/dqgz/djgz</a>
+          {% else %}
+            <span style="color:var(--muted)">—</span>
+          {% endif %}
+        </td>
         <td>{{ s.c }}</td>
         <td><a href="/source/{{ s.code }}">浏览 →</a></td>
       </tr>
     {% endfor %}
   </table>
-  <p style="color:var(--muted);font-size:12.5px">当前共收录 {{ total }} 条通知，每 20 分钟自动更新。</p>
-
-  <h2>只收录本科生相关</h2>
-  <p>
-    系统会过滤掉主要面向研究生、教师、干部的通知（如博士招生、科研项目申报、干部任免、教职工会议等），
-    保留推免、选课、考试、奖学金、竞赛、生活服务等与本科生相关的内容。
+  <p style="color:var(--muted);font-size:12.5px">
+    当前共收录 {{ total }} 条通知，每 60 分钟自动更新一次。
+    部分栏目（如信息公开网的学生/教工通知、学院公示详情页）需要校内权限或会触发验证码，
+    这类内容只收录标题并标注「仅校内」，不会展示无法打开的页面。
   </p>
 
-  <h2>受限通知不展示</h2>
-  <p>
-    部分通知（多为含个人信息的公示名单）在校外访问时返回"暂无权限"，这类页面不会出现在站内，
-    以免用户点击后看到错误页；如需查阅，请登录校内门户。
-  </p>
+  <h2>站点做了什么</h2>
+  <ul>
+    <li><strong>聚合</strong>：把 6 个栏目的通知放到一个时间线里，支持按来源、分类、重要度、截止日期筛选</li>
+    <li><strong>过滤</strong>：自动剔除博士/硕士/教师/干部/科研/会议/讲座类内容，只保留本科生相关的推免、选课、考试、奖助、竞赛、生活服务等</li>
+    <li><strong>去重</strong>：同一条通知发在多个栏目时，按「标题 + 发布日期」自动合并</li>
+    <li><strong>分档</strong>：重要度只分「重要 / 一般 / 参考」三档，不堆砌数字</li>
+    <li><strong>找得到</strong>：分类页、信源页、按月归档、搜索、RSS、Sitemap 都可用</li>
+  </ul>
 
   <h2>技术说明</h2>
   <ul>
-    <li>Python + FastAPI + SQLite，单机运行</li>
-    <li>每 20 分钟增量抓取，按 URL 差集判断新增，原始页面保留 7 天快照</li>
-    <li>提供 <a href="/rss.xml">RSS</a> 与 <a href="/api/notices">JSON API</a>，方便二次开发</li>
-    <li>站点为只读服务：无需登录，不收集访问者个人信息</li>
+    <li>Python + FastAPI + SQLite，单机运行，无前端框架依赖</li>
+    <li>抓取遵循低频原则：每站点 4 秒 1 次、带随机抖动；命中验证码立即停止该站点</li>
+    <li>不登录、不采集访问者信息；页面只有只读内容与统计</li>
   </ul>
 
   <h2>免责声明</h2>
   <p>
-    本站为非官方、非商业的个人项目，不代表武汉大学任何部门立场；所有内容版权归原发布单位所有，
-    <strong>信息以官网原文为准</strong>，重要事项请务必到原文页面核实。
+    本站为非官方、非商业的个人项目，不代表武汉大学任何部门立场。
+    所有内容版权归原发布单位所有，<strong>信息以官网原文为准</strong>；
+    重要事项（报名、缴费、材料提交等）请务必到原文页面核实。
+  </p>
+  <p style="color:var(--muted);font-size:12.5px">
+    更新记录见 <a href="/changelog">更新日志</a>；如需反馈或申请访问，可发邮件至
+    <a href="mailto:githubseeker@163.com">githubseeker@163.com</a>。
   </p>
 </div>
 {% endblock %}
