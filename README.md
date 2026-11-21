@@ -33,7 +33,13 @@
 | 层级 | 信源 | 列表入口 | 结构 |
 |---|---|---|---|
 | 校级 | 武汉大学官网 · 通知公告 | `www.whu.edu.cn/tzgg.htm` | 表格，10 条/页，页码倒序 |
+| 校级 | 信息公开网 · 最新公开 | `info.whu.edu.cn/gz/zxgk.htm` | 列表项含标题 + 日期 |
 | 院系 | 计算机学院 · 通知公告 | `cs.whu.edu.cn/xwdt/tzgg.htm` | 列表项含标题 + 日期，15 条/页 |
+| 院系 | 计算机学院 · 本科生教育 | `cs.whu.edu.cn/rcpy/bksjy.htm` | 同上模板 |
+| 院系 | 计算机学院 · 共青团 | `cs.whu.edu.cn/dqgz/gqtgz.htm` | 同上模板 |
+| 院系 | 计算机学院 · 党建 | `cs.whu.edu.cn/dqgz/djgz.htm` | 同上模板 |
+
+> 信息公开网的「学生/教工通知」栏目需要 CAS 统一认证（未登录会 302 到登录页），本项目只接入公开可访问的「最新公开」。
 
 新增信源：复制 YAML 模板段 → 用真实页面校准 XPath → `python -m app.cli crawl --dry-run --source <code>` 验证。
 

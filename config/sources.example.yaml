@@ -144,12 +144,37 @@ sources:
       fallback: readability
 
   # --------------------------------------------------------------------------
-  # 5. 武汉大学信息公开网 · 最新公开（校级，公开栏无需登录）
+  # 5. 计算机学院 · 党建（党员发展公示等，学生相关）
+  # --------------------------------------------------------------------------
+  - code: cs_party
+    name: 计算机学院·党建
+    level: college
+    enabled: true
+    weight: 65
+    interval_minutes: 120
+    list:
+      url: https://cs.whu.edu.cn/dqgz/djgz.htm
+      pagination: { mode: none, backfill_pages: 1 }
+      items:
+        xpath: "//li[a[p][span]]"
+        fields:
+          title: "./a/p"
+          url: "./a/@href"
+          published_at: "./a/span"
+    detail:
+      title: "//h2 | //h1"
+      published_at: "//*[contains(text(),'发布时间')]"
+      content: "//div[@id='vsb_content'] | //div[contains(@class,'article-content')]"
+      attachments: "//a[contains(@href,'download.jsp')]"
+      fallback: readability
+
+  # --------------------------------------------------------------------------
+  # 6. 武汉大学信息公开网 · 最新公开（校级，公开栏无需登录）
   # --------------------------------------------------------------------------
   - code: whu_info_public
     name: 信息公开网·最新公开
     level: university
-    enabled: false            # 内容多为信息公开年报/招生简章，本科生相关性低，默认关闭
+    enabled: true             # 公开栏可抓；学生/教工通知栏需 CAS 登录，不接入
     weight: 65
     interval_minutes: 60
     list:
