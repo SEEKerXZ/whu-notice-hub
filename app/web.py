@@ -1,4 +1,4 @@
-"""FastAPI 只读前端 + JSON API。"""
+"""FastAPI 前端（公开只读） + JSON API + RSS。"""
 from __future__ import annotations
 
 import base64
@@ -8,11 +8,13 @@ import time
 from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
+from urllib.parse import quote
 from xml.sax.saxutils import escape
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config  # noqa: F401  加载 .env
 from . import db
@@ -30,10 +32,13 @@ _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
+# ---------------------------------------------------------------------------
+# 中间件
+# ---------------------------------------------------------------------------
 @app.middleware("http")
 async def rate_limit(request: Request, call_next):
     """轻量限流：每个 IP 每分钟最多 N 次，防止公开后被刷。"""
-    if request.url.path in ("/healthz", "/rss.xml"):
+    if request.url.path in ("/healthz", "/rss.xml", "/sitemap.xml"):
         return await call_next(request)
     ip = request.client.host if request.client else "unknown"
     now_ts = time.time()
@@ -46,10 +51,6 @@ async def rate_limit(request: Request, call_next):
         return Response(status_code=429, content="请求过于频繁，请稍后再试")
     bucket.append(now_ts)
     return await call_next(request)
-
-
-def _conn():
-    return db.connect()
 
 
 @app.middleware("http")
@@ -76,11 +77,23 @@ async def basic_auth(request: Request, call_next):
     )
 
 
-def _categories() -> list[str]:
-    conn = _conn()
-    rows = conn.execute("SELECT DISTINCT category FROM notices ORDER BY category").fetchall()
-    conn.close()
-    return [r["category"] for r in rows]
+# ---------------------------------------------------------------------------
+# 通用查询
+# ---------------------------------------------------------------------------
+def _conn():
+    return db.connect()
+
+
+def _categories(conn) -> list[dict]:
+    return [dict(r) for r in conn.execute(
+        "SELECT category, COUNT(*) AS c FROM notices GROUP BY category ORDER BY c DESC")]
+
+
+def _sources(conn) -> list[dict]:
+    return [dict(r) for r in conn.execute(
+        """SELECT s.code, s.name, COUNT(n.id) AS c
+             FROM sources s LEFT JOIN notices n ON n.source_code = s.code
+            WHERE s.enabled = 1 GROUP BY s.code ORDER BY s.weight DESC""")]
 
 
 def _overview(conn) -> dict:
@@ -94,18 +107,6 @@ def _overview(conn) -> dict:
             WHERE deadline_date BETWEEN date('now','localtime')
                                     AND date('now','localtime','+7 day')"""
     ).fetchone()["c"]
-    source_counts = [
-        dict(r) for r in conn.execute(
-            """SELECT s.code, s.name, COUNT(n.id) AS c
-                 FROM sources s LEFT JOIN notices n ON n.source_code = s.code
-                WHERE s.enabled = 1 GROUP BY s.code ORDER BY s.weight DESC"""
-        )
-    ]
-    category_counts = [
-        dict(r) for r in conn.execute(
-            "SELECT category, COUNT(*) AS c FROM notices GROUP BY category ORDER BY c DESC"
-        )
-    ]
     important = [
         dict(r) for r in conn.execute(
             """SELECT n.id, n.title, n.importance, n.category, n.published_at,
@@ -117,8 +118,17 @@ def _overview(conn) -> dict:
         )
     ]
     return {"today_new": today, "upcoming": upcoming,
-            "source_counts": source_counts, "category_counts": category_counts,
+            "source_counts": _sources(conn), "category_counts": _categories(conn),
             "important": important}
+
+
+def _decorate(items: list[dict]) -> list[dict]:
+    for item in items:
+        try:
+            item["audience"] = json.loads(item.get("audience_json") or "[]")
+        except json.JSONDecodeError:
+            item["audience"] = []
+    return items
 
 
 def _rfc822(d: date) -> str:
@@ -126,12 +136,161 @@ def _rfc822(d: date) -> str:
             f"{d.year} 09:00:00 +0800")
 
 
+def _list_response(request: Request, *, page_title: str, base_path: str,
+                   source: str | None = None, category: str | None = None,
+                   q: str | None = None, min_score: int | None = None,
+                   deadline: int = 0, month: str | None = None,
+                   page: int = 1, size: int = 30, show_overview: bool = False):
+    page = max(1, page)
+    conn = _conn()
+    try:
+        rows = db.query_notices(
+            conn, source=source, category=category, q=q, min_score=min_score,
+            has_deadline=bool(deadline), month=month,
+            limit=size, offset=(page - 1) * size,
+        )
+        items = _decorate([dict(r) for r in rows])
+        total = db.count_notices(conn)
+        overview = _overview(conn) if show_overview else None
+        sources = _sources(conn)
+        categories = _categories(conn)
+    finally:
+        conn.close()
+
+    filters = {"source": source or "", "category": category or "",
+               "q": q or "", "min_score": min_score or "",
+               "deadline": deadline, "month": month or ""}
+    return templates.TemplateResponse(request, "index.html", {
+        "items": items, "sources": sources, "categories": categories,
+        "total": total, "overview": overview, "filters": filters,
+        "page": page, "size": size, "has_next": len(items) == size,
+        "page_title": page_title, "base_path": base_path,
+    })
+
+
+# ---------------------------------------------------------------------------
+# 页面路由
+# ---------------------------------------------------------------------------
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request, source: str | None = None, category: str | None = None,
+          q: str | None = None, min_score: int | None = None, deadline: int = 0,
+          page: int = 1, size: int = 30):
+    title = "全部通知"
+    if q:
+        title = f"搜索：{q}"
+    return _list_response(
+        request, page_title=title, base_path="/",
+        source=source, category=category, q=q, min_score=min_score,
+        deadline=deadline, page=page, size=size,
+        show_overview=not any([source, category, q, min_score, deadline]),
+    )
+
+
+@app.get("/search", response_class=HTMLResponse)
+def search(request: Request, q: str = ""):
+    return RedirectResponse(f"/?q={quote(q)}", status_code=307)
+
+
+@app.get("/category/{category}", response_class=HTMLResponse)
+def category_page(request: Request, category: str, page: int = 1, size: int = 30):
+    return _list_response(request, page_title=f"{category} · 分类",
+                          base_path=f"/category/{quote(category)}",
+                          category=category, page=page, size=size)
+
+
+@app.get("/source/{code}", response_class=HTMLResponse)
+def source_page(request: Request, code: str, page: int = 1, size: int = 30):
+    return _list_response(request, page_title=f"{code} · 信源",
+                          base_path=f"/source/{quote(code)}",
+                          source=code, page=page, size=size)
+
+
+@app.get("/archive", response_class=HTMLResponse)
+def archive(request: Request):
+    conn = _conn()
+    try:
+        months = [dict(r) for r in db.month_counts(conn)]
+        total = db.count_notices(conn)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "archive.html", {
+        "months": months, "total": total,
+    })
+
+
+@app.get("/archive/{month}", response_class=HTMLResponse)
+def archive_month(request: Request, month: str, page: int = 1, size: int = 30):
+    return _list_response(request, page_title=f"{month} · 归档",
+                          base_path=f"/archive/{quote(month)}",
+                          month=month, page=page, size=size)
+
+
+@app.get("/about", response_class=HTMLResponse)
+def about(request: Request):
+    conn = _conn()
+    try:
+        total = db.count_notices(conn)
+        sources = _sources(conn)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "about.html", {
+        "total": total, "sources": sources,
+    })
+
+
+@app.get("/notice/{notice_id}", response_class=HTMLResponse)
+def notice_detail(request: Request, notice_id: int):
+    conn = _conn()
+    try:
+        row = conn.execute(
+            """SELECT n.*, s.name AS source_name FROM notices n
+                 LEFT JOIN sources s ON s.code = n.source_code WHERE n.id=?""",
+            (notice_id,),
+        ).fetchone()
+        if not row:
+            return templates.TemplateResponse(request, "404.html",
+                                              {"path": request.url.path}, status_code=404)
+        item = dict(row)
+        item["audience"] = json.loads(item.get("audience_json") or "[]")
+        item["action_items"] = json.loads(item.get("action_items_json") or "[]")
+        attachments = [dict(a) for a in conn.execute(
+            "SELECT name, url FROM attachments WHERE notice_id=?", (notice_id,))]
+        versions = [dict(v) for v in conn.execute(
+            "SELECT fetched_at, diff_summary FROM notice_versions WHERE notice_id=? ORDER BY id DESC LIMIT 5",
+            (notice_id,))]
+
+        cursor = "COALESCE(n.published_at, n.first_seen_at)"
+        prev_row = conn.execute(
+            f"""SELECT id, title FROM notices n WHERE {cursor} > ?
+                 ORDER BY {cursor} ASC LIMIT 1""",
+            (item["published_at"] or item["first_seen_at"],)).fetchone()
+        next_row = conn.execute(
+            f"""SELECT id, title FROM notices n WHERE {cursor} < ?
+                 ORDER BY {cursor} DESC LIMIT 1""",
+            (item["published_at"] or item["first_seen_at"],)).fetchone()
+        related = _decorate([dict(r) for r in conn.execute(
+            """SELECT n.id, n.title, n.importance, n.category, n.published_at
+                 FROM notices n WHERE n.category=? AND n.id<>?
+                ORDER BY COALESCE(n.published_at, n.first_seen_at) DESC LIMIT 5""",
+            (item["category"], notice_id))])
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "notice.html", {
+        "n": item, "attachments": attachments, "versions": versions,
+        "prev": dict(prev_row) if prev_row else None,
+        "next": dict(next_row) if next_row else None,
+        "related": related,
+    })
+
+
+# ---------------------------------------------------------------------------
+# 机器可读接口
+# ---------------------------------------------------------------------------
 @app.get("/healthz")
 def healthz() -> dict:
     conn = _conn()
     try:
-        total = db.count_notices(conn)
-        return {"ok": True, "notices": total}
+        return {"ok": True, "notices": db.count_notices(conn)}
     finally:
         conn.close()
 
@@ -139,12 +298,14 @@ def healthz() -> dict:
 @app.get("/api/notices")
 def api_notices(source: str | None = None, category: str | None = None,
                 q: str | None = None, min_score: int | None = None,
-                deadline: int = 0, limit: int = 50, offset: int = 0) -> JSONResponse:
+                deadline: int = 0, month: str | None = None,
+                limit: int = 50, offset: int = 0) -> JSONResponse:
     conn = _conn()
     try:
         rows = db.query_notices(
             conn, source=source, category=category, q=q, min_score=min_score,
-            has_deadline=bool(deadline), limit=min(limit, 200), offset=offset,
+            has_deadline=bool(deadline), month=month,
+            limit=min(limit, 200), offset=offset,
         )
         data = [dict(r) for r in rows]
         for item in data:
@@ -156,39 +317,6 @@ def api_notices(source: str | None = None, category: str | None = None,
         return JSONResponse({"count": len(data), "data": data})
     finally:
         conn.close()
-
-
-@app.get("/", response_class=HTMLResponse)
-def index(request: Request, source: str | None = None, category: str | None = None,
-          q: str | None = None, min_score: int | None = None, deadline: int = 0,
-          page: int = 1, size: int = 30):
-    conn = _conn()
-    try:
-        rows = db.query_notices(
-            conn, source=source, category=category, q=q, min_score=min_score,
-            has_deadline=bool(deadline), limit=size, offset=(page - 1) * size,
-        )
-        items = [dict(r) for r in rows]
-        for item in items:
-            try:
-                item["audience"] = json.loads(item.get("audience_json") or "[]")
-            except json.JSONDecodeError:
-                item["audience"] = []
-        sources = list(conn.execute(
-            "SELECT code, name FROM sources WHERE enabled=1 ORDER BY weight DESC"))
-        total = db.count_notices(conn)
-        overview = _overview(conn) if not any([source, category, q, min_score, deadline]) else None
-    finally:
-        conn.close()
-
-    return templates.TemplateResponse(request, "index.html", {
-        "items": items, "sources": sources,
-        "categories": _categories(), "total": total, "overview": overview,
-        "filters": {"source": source or "", "category": category or "",
-                    "q": q or "", "min_score": min_score or "", "deadline": deadline},
-        "page": page, "size": size,
-        "has_next": len(items) == size,
-    })
 
 
 @app.get("/rss.xml")
@@ -211,7 +339,7 @@ def rss(limit: int = 50) -> Response:
             "<item>"
             f"<title>{escape(r['title'] or '')}</title>"
             f"<link>{escape(r['url'])}</link>"
-            f"<guid isPermaLink=\"true\">{escape(r['url'])}</guid>"
+            f'<guid isPermaLink="true">{escape(r["url"])}</guid>'
             f"<pubDate>{pub_date}</pubDate>"
             f"<description>{escape(r['summary'] or '')}</description>"
             "</item>"
@@ -229,27 +357,26 @@ def rss(limit: int = 50) -> Response:
     return Response(content=xml, media_type="application/rss+xml; charset=utf-8")
 
 
-@app.get("/notice/{notice_id}", response_class=HTMLResponse)
-def notice_detail(request: Request, notice_id: int):
+@app.get("/sitemap.xml")
+def sitemap() -> Response:
     conn = _conn()
     try:
-        row = conn.execute(
-            """SELECT n.*, s.name AS source_name FROM notices n
-                 LEFT JOIN sources s ON s.code = n.source_code WHERE n.id=?""",
-            (notice_id,),
-        ).fetchone()
-        if not row:
-            return HTMLResponse("<h1>404</h1><p>通知不存在</p>", status_code=404)
-        item = dict(row)
-        item["audience"] = json.loads(item.get("audience_json") or "[]")
-        item["action_items"] = json.loads(item.get("action_items_json") or "[]")
-        attachments = [dict(a) for a in conn.execute(
-            "SELECT name, url FROM attachments WHERE notice_id=?", (notice_id,))]
-        versions = [dict(v) for v in conn.execute(
-            "SELECT fetched_at, diff_summary FROM notice_versions WHERE notice_id=? ORDER BY id DESC LIMIT 5",
-            (notice_id,))]
+        rows = conn.execute("SELECT id FROM notices ORDER BY id DESC LIMIT 2000").fetchall()
     finally:
         conn.close()
-    return templates.TemplateResponse(request, "notice.html", {
-        "n": item, "attachments": attachments, "versions": versions,
-    })
+    urls = "".join(f"<url><loc>/notice/{r['id']}</loc></url>" for r in rows)
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+           f"{urls}</urlset>")
+    return Response(content=xml, media_type="application/xml; charset=utf-8")
+
+
+# ---------------------------------------------------------------------------
+# 404
+# ---------------------------------------------------------------------------
+@app.exception_handler(StarletteHTTPException)
+async def http_exception(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        return templates.TemplateResponse(request, "404.html",
+                                          {"path": request.url.path}, status_code=404)
+    return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)

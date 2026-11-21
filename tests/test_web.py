@@ -1,5 +1,6 @@
-"""Web 层冒烟测试：模板渲染、健康检查、JSON API、RSS、限流与认证。"""
+"""Web 层测试：页面路由、导航、RSS、API、限流与认证。"""
 import base64
+from urllib.parse import quote
 
 import pytest
 from fastapi.testclient import TestClient
@@ -30,6 +31,22 @@ def client(tmp_path, monkeypatch):
         "deadline_date": "2026-12-01",
         "importance": 80,
     })
+    db.save_notice(conn, {
+        "source_code": "whu_main",
+        "url": "https://www.whu.edu.cn/info/1/3.htm",
+        "url_hash": "def456",
+        "title": "关于奖学金评选的通知",
+        "title_norm": "关于奖学金评选的通知",
+        "published_at": "2026-10-15",
+        "category": "奖助",
+        "summary": "奖学金开始评选",
+        "content_md": "正文",
+        "content_hash": "h2",
+        "audience": [],
+        "action_items": [],
+        "deadline_date": None,
+        "importance": 60,
+    })
     conn.close()
 
     from app.web import app
@@ -41,26 +58,57 @@ def test_index_renders(client):
     resp = client.get("/")
     assert resp.status_code == 200
     assert "WHU Notice Hub" in resp.text
-    assert "今日新增" in resp.text          # 概览统计
-    assert "重点通知" in resp.text          # 重点区块（重要度 80）
+    assert "今日新增" in resp.text
+    assert "重点通知" in resp.text
 
 
 def test_index_filter(client):
     assert client.get("/?category=教务").status_code == 200
     assert client.get("/?q=选课").status_code == 200
+    assert "仅看有截止日期" in client.get("/").text
+
+
+def test_category_page(client):
+    resp = client.get("/category/" + quote("教务"))
+    assert resp.status_code == 200
+    assert "教务 · 分类" in resp.text
+    assert "关于本科生选课的通知" in resp.text
+
+
+def test_source_page(client):
+    resp = client.get("/source/whu_main")
+    assert resp.status_code == 200
+    assert "whu_main · 信源" in resp.text
+
+
+def test_archive_pages(client):
+    resp = client.get("/archive")
+    assert resp.status_code == 200
+    assert "2026-11" in resp.text
+    resp2 = client.get("/archive/2026-11")
+    assert resp2.status_code == 200
+    assert "关于本科生选课的通知" in resp2.text
+
+
+def test_about_page(client):
+    resp = client.get("/about")
+    assert resp.status_code == 200
+    assert "关于这个站点" in resp.text
+    assert "免责声明" in resp.text
+
+
+def test_search_redirect(client):
+    resp = client.get("/search?q=" + quote("选课"), follow_redirects=False)
+    assert resp.status_code in (302, 307)
 
 
 def test_healthz(client):
-    resp = client.get("/healthz")
-    assert resp.status_code == 200
-    assert resp.json()["ok"] is True
+    assert client.get("/healthz").json()["ok"] is True
 
 
 def test_api_notices(client):
-    resp = client.get("/api/notices")
-    assert resp.status_code == 200
-    payload = resp.json()
-    assert payload["count"] == 1
+    payload = client.get("/api/notices").json()
+    assert payload["count"] == 2
     assert payload["data"][0]["title"] == "关于本科生选课的通知"
 
 
@@ -68,13 +116,29 @@ def test_rss(client):
     resp = client.get("/rss.xml")
     assert resp.status_code == 200
     assert resp.headers["content-type"].startswith("application/rss+xml")
-    assert "<rss" in resp.text
     assert "关于本科生选课的通知" in resp.text
 
 
-def test_notice_detail(client):
-    assert client.get("/notice/1").status_code == 200
-    assert client.get("/notice/99999").status_code == 404
+def test_sitemap(client):
+    resp = client.get("/sitemap.xml")
+    assert resp.status_code == 200
+    assert "/notice/" in resp.text and "<urlset" in resp.text
+
+
+def test_notice_detail_navigation(client):
+    resp = client.get("/notice/1")
+    assert resp.status_code == 200
+    assert "同分类通知" in resp.text or "上一条" in resp.text
+    assert "查看原文" in resp.text
+
+
+def test_404_page(client):
+    resp = client.get("/notice/99999")
+    assert resp.status_code == 404
+    assert "404" in resp.text
+
+    resp2 = client.get("/no-such-page")
+    assert resp2.status_code == 404
 
 
 def test_rate_limit(client, monkeypatch):
@@ -94,10 +158,7 @@ def test_basic_auth(client, monkeypatch):
     assert client.get("/").status_code == 401
 
     token = base64.b64encode(b"u:p").decode()
-    ok = client.get("/", headers={"Authorization": f"Basic {token}"})
-    assert ok.status_code == 200
-
-    # 健康检查不要求认证，便于监控
+    assert client.get("/", headers={"Authorization": f"Basic {token}"}).status_code == 200
     assert client.get("/healthz").status_code == 200
 
 

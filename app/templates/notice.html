@@ -1,19 +1,23 @@
 {% extends "base.html" %}
 {% block title %}{{ n.title }} · WHU Notice Hub{% endblock %}
 {% block content %}
+<div class="crumbs">
+  <a href="/">首页</a> / <a href="/category/{{ n.category|urlencode }}">{{ n.category }}</a> / <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a> / 正文
+</div>
+
 <article class="article">
   <div class="meta">
     {% if n.importance >= 80 %}<span class="badge b-hi">{{ n.importance }}</span>
     {% elif n.importance >= 60 %}<span class="badge b-mid">{{ n.importance }}</span>
     {% else %}<span class="badge b-low">{{ n.importance }}</span>{% endif %}
-    <span class="tag">{{ n.category }}</span>
-    <span>{{ n.source_name or n.source_code }}</span>
+    <a class="tag" href="/category/{{ n.category|urlencode }}">{{ n.category }}</a>
+    <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a>
     <span>{{ n.published_at or n.first_seen_at[:10] }}</span>
-    {% if n.deadline_date %}<span>⏰ 截止 {{ n.deadline_date }}</span>{% endif %}
+    {% if n.deadline_date %}<span class="deadline">⏰ 截止 {{ n.deadline_date }}</span>{% endif %}
   </div>
   <h1>{{ n.title }}</h1>
   <div class="meta">
-    <a href="{{ n.url }}" target="_blank" rel="noopener" style="color:var(--blue)">查看原文 ↗</a>
+    <a href="{{ n.url }}" target="_blank" rel="noopener">查看原文 ↗</a>
     {% if n.status == 'updated' %}<span class="tag">已更新</span>{% endif %}
     {% if n.date_inferred %}<span class="tag">日期推断</span>{% endif %}
   </div>
@@ -42,6 +46,22 @@
     <p style="font-size:12px;color:var(--muted);margin-top:24px">
       变更记录：{% for v in versions %}{{ v.fetched_at }} {{ v.diff_summary }}；{% endfor %}
     </p>
+  {% endif %}
+
+  <div class="pn">
+    {% if prev %}<a href="/notice/{{ prev.id }}">← 上一条：{{ prev.title[:28] }}</a>{% else %}<span class="off">← 上一条</span>{% endif %}
+    {% if next %}<a href="/notice/{{ next.id }}" style="margin-left:auto">下一条：{{ next.title[:28] }} →</a>{% else %}<span class="off" style="margin-left:auto">下一条 →</span>{% endif %}
+  </div>
+
+  {% if related %}
+    <div class="related">
+      <h3>同分类通知</h3>
+      <ul>
+        {% for r in related %}
+          <li><a href="/notice/{{ r.id }}">{{ r.title[:44] }}</a> <span class="tag">{{ r.published_at or '' }}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
   {% endif %}
 </article>
 {% endblock %}

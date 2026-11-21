@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="crumbs"><a href="/">首页</a> / 归档</div>
+<div class="page-head"><h2>按月归档</h2><span class="count">共 {{ total }} 条</span></div>
+
+<div class="month-grid">
+  {% for m in months %}
+    <a class="month" href="/archive/{{ m.month }}">
+      <b>{{ m.month }}</b><br>
+      <span>{{ m.c }} 条</span>
+    </a>
+  {% endfor %}
+</div>
+
+{% if not months %}
+  <div class="empty">暂无数据。</div>
+{% endif %}
+{% endblock %}

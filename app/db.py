@@ -200,6 +200,7 @@ def text_hash(value: str) -> str:
 def query_notices(conn: sqlite3.Connection, *, source: str | None = None,
                   category: str | None = None, q: str | None = None,
                   min_score: int | None = None, has_deadline: bool = False,
+                  month: str | None = None,
                   limit: int = 50, offset: int = 0) -> list[sqlite3.Row]:
     sql = ["SELECT n.*, s.name AS source_name FROM notices n LEFT JOIN sources s ON s.code=n.source_code WHERE 1=1"]
     args: list = []
@@ -217,6 +218,9 @@ def query_notices(conn: sqlite3.Connection, *, source: str | None = None,
         args.append(min_score)
     if has_deadline:
         sql.append("AND n.deadline_date IS NOT NULL")
+    if month:
+        sql.append("AND substr(COALESCE(n.published_at, n.first_seen_at),1,7)=?")
+        args.append(month)
     sql.append("ORDER BY COALESCE(n.published_at, n.first_seen_at) DESC, n.importance DESC")
     sql.append("LIMIT ? OFFSET ?")
     args += [limit, offset]
@@ -225,6 +229,16 @@ def query_notices(conn: sqlite3.Connection, *, source: str | None = None,
 
 def count_notices(conn: sqlite3.Connection) -> int:
     return int(conn.execute("SELECT COUNT(*) c FROM notices").fetchone()["c"])
+
+
+def month_counts(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    """按月统计，用于归档页。"""
+    return list(conn.execute(
+        """SELECT substr(COALESCE(published_at, first_seen_at),1,7) AS month,
+                  COUNT(*) AS c
+             FROM notices
+            GROUP BY month ORDER BY month DESC"""
+    ))
 
 
 def stats(conn: sqlite3.Connection) -> list[sqlite3.Row]:
