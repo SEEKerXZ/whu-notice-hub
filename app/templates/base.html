@@ -303,6 +303,7 @@
     <nav>
       <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">首页</a>
       <a href="/archive" class="{% if request.url.path.startswith('/archive') %}active{% endif %}">归档</a>
+      <a href="/changelog" class="{% if request.url.path == '/changelog' %}active{% endif %}">更新日志</a>
       <a href="/about" class="{% if request.url.path == '/about' %}active{% endif %}">关于</a>
       <a href="/rss.xml">RSS</a>
     </nav>

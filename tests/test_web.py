@@ -110,6 +110,13 @@ def test_about_page(client):
     assert "免责声明" in resp.text
 
 
+def test_changelog_page(client):
+    resp = client.get("/changelog")
+    assert resp.status_code == 200
+    assert "更新日志" in resp.text
+    assert "v1.0.0" in resp.text
+
+
 def test_search_redirect(client):
     resp = client.get("/search?q=" + quote("选课"), follow_redirects=False)
     assert resp.status_code in (302, 307)

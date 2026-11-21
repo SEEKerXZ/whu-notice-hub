@@ -303,6 +303,15 @@ def about(request: Request):
     })
 
 
+@app.get("/changelog", response_class=HTMLResponse)
+def changelog(request: Request):
+    from .changelog import CHANGELOG
+
+    return templates.TemplateResponse(request, "changelog.html", {
+        "entries": CHANGELOG,
+    })
+
+
 @app.get("/notice/{notice_id}", response_class=HTMLResponse)
 def notice_detail(request: Request, notice_id: int):
     conn = _conn()

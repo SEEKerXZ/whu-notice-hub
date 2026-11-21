@@ -1,0 +1,20 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="crumbs"><a href="/">首页</a><span>/</span><span>更新日志</span></div>
+<div class="page-head"><h1>更新日志</h1><span class="count">共 {{ entries|length }} 个版本</span></div>
+
+<div class="prose">
+  {% for e in entries %}
+    <section style="margin-top:26px">
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <h2 style="margin:0;font-size:16px">{{ e.title }}</h2>
+        <span class="tag">{{ e.version }}</span>
+        <span style="font-size:12px;color:var(--muted)">{{ e.date }}</span>
+      </div>
+      <ul style="margin-top:8px">
+        {% for item in e.changes %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    </section>
+  {% endfor %}
+</div>
+{% endblock %}
