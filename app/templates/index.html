@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="filters" method="get" action="/">
+  <select name="source">
+    <option value="">全部来源</option>
+    {% for s in sources %}
+      <option value="{{ s.code }}" {% if filters.source == s.code %}selected{% endif %}>{{ s.name }}</option>
+    {% endfor %}
+  </select>
+  <select name="category">
+    <option value="">全部分类</option>
+    {% for c in categories %}
+      <option value="{{ c }}" {% if filters.category == c %}selected{% endif %}>{{ c }}</option>
+    {% endfor %}
+  </select>
+  <input type="text" name="q" value="{{ filters.q }}" placeholder="搜索标题或正文…">
+  <input type="number" name="min_score" value="{{ filters.min_score }}" placeholder="最低重要度" min="0" max="100" style="width:110px">
+  <label style="font-size:13px;display:flex;align-items:center;gap:4px;">
+    <input type="checkbox" name="deadline" value="1" {% if filters.deadline %}checked{% endif %}> 仅看有截止日期
+  </label>
+  <button type="submit">筛选</button>
+  {% if filters.source or filters.category or filters.q or filters.min_score or filters.deadline %}
+    <a href="/" style="font-size:13px;align-self:center;color:var(--muted)">重置</a>
+  {% endif %}
+</form>
+
+{% if not items %}
+  <div class="empty">暂无数据——先运行 <code>python -m app.cli crawl</code> 抓取一次。</div>
+{% endif %}
+
+{% for n in items %}
+  <div class="item">
+    <h2><a href="/notice/{{ n.id }}">{{ n.title }}</a></h2>
+    <div class="meta">
+      {% if n.importance >= 80 %}<span class="badge b-hi">{{ n.importance }}</span>
+      {% elif n.importance >= 60 %}<span class="badge b-mid">{{ n.importance }}</span>
+      {% else %}<span class="badge b-low">{{ n.importance }}</span>{% endif %}
+      <span class="tag">{{ n.category }}</span>
+      <span>{{ n.source_name or n.source_code }}</span>
+      <span>{{ n.published_at or n.first_seen_at[:10] }}{% if n.date_inferred %}（推断）{% endif %}</span>
+      {% if n.deadline_date %}<span>⏰ 截止 {{ n.deadline_date }}</span>{% endif %}
+      <a href="{{ n.url }}" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none">原文 ↗</a>
+    </div>
+    {% if n.summary %}<p class="summary">{{ n.summary }}</p>{% endif %}
+  </div>
+{% endfor %}
+
+<div class="pager">
+  {% if page > 1 %}
+    <a href="?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'min_score': filters.min_score, 'deadline': filters.deadline, 'page': page-1}|urlencode }}">← 上一页</a>
+  {% else %}<span class="off">← 上一页</span>{% endif %}
+  <span class="off">第 {{ page }} 页</span>
+  {% if has_next %}
+    <a href="?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'min_score': filters.min_score, 'deadline': filters.deadline, 'page': page+1}|urlencode }}">下一页 →</a>
+  {% else %}<span class="off">下一页 →</span>{% endif %}
+</div>
+{% endblock %}

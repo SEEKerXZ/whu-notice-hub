@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ n.title }} · WHU Notice Hub{% endblock %}
+{% block content %}
+<article class="article">
+  <div class="meta">
+    {% if n.importance >= 80 %}<span class="badge b-hi">{{ n.importance }}</span>
+    {% elif n.importance >= 60 %}<span class="badge b-mid">{{ n.importance }}</span>
+    {% else %}<span class="badge b-low">{{ n.importance }}</span>{% endif %}
+    <span class="tag">{{ n.category }}</span>
+    <span>{{ n.source_name or n.source_code }}</span>
+    <span>{{ n.published_at or n.first_seen_at[:10] }}</span>
+    {% if n.deadline_date %}<span>⏰ 截止 {{ n.deadline_date }}</span>{% endif %}
+  </div>
+  <h1>{{ n.title }}</h1>
+  <div class="meta">
+    <a href="{{ n.url }}" target="_blank" rel="noopener" style="color:var(--blue)">查看原文 ↗</a>
+    {% if n.status == 'updated' %}<span class="tag">已更新</span>{% endif %}
+    {% if n.date_inferred %}<span class="tag">日期推断</span>{% endif %}
+  </div>
+
+  {% if n.summary %}<p class="summary" style="font-size:14px;color:#3d444d">{{ n.summary }}</p>{% endif %}
+
+  {% if n.audience %}
+    <p style="font-size:13px">适用对象：{% for a in n.audience %}<span class="tag">{{ a }}</span> {% endfor %}</p>
+  {% endif %}
+
+  {% if n.action_items %}
+    <div><strong style="font-size:14px">要做什么</strong>
+      <ul class="actions">{% for a in n.action_items %}<li>{{ a }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+
+  {% if attachments %}
+    <div class="att"><strong style="font-size:14px">附件</strong>
+      <ul>{% for a in attachments %}<li><a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.name or '附件' }}</a></li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+
+  <div class="body">{{ n.content_md or '（未抓到正文，请查看原文）' }}</div>
+
+  {% if versions %}
+    <p style="font-size:12px;color:var(--muted);margin-top:24px">
+      变更记录：{% for v in versions %}{{ v.fetched_at }} {{ v.diff_summary }}；{% endfor %}
+    </p>
+  {% endif %}
+</article>
+{% endblock %}

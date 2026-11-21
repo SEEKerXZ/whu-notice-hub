@@ -1,0 +1,20 @@
+services:
+  web:
+    build: .
+    container_name: whu-notice-hub
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - SCHEDULER_ENABLED=1
+      - DB_PATH=/app/data/app.db
+      - TZ=Asia/Shanghai
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -1,0 +1,36 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# ---- 运行数据（绝不入库）----
+data/
+*.db
+*.sqlite
+*.sqlite3
+data/attachments/
+data/snapshots/
+logs/
+*.log
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---- 临时 ----
+.tmp/
+tmp/
+*.zip
+*.tar.gz

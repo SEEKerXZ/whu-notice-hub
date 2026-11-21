@@ -1,0 +1,190 @@
+# ============================================================================
+# 武大通知聚合 · 信源配置（示例）
+# ----------------------------------------------------------------------------
+# 新增一个站点 = 复制一段 YAML + 校准 selector，不需要改代码。
+# 说明：
+#   · 标 [实测] 的字段是 2026-11 实际抓取验证过的结构；
+#   · 标 [待校准] 的字段需跑 `crawl --dry-run` 用真实 HTML 微调；
+#   · 博达 VSB CMS 的详情页正文容器通常是 #vsb_content / .v_news_content /
+#     div.article，优先交给 readability 自动抽取，selector 只做覆盖。
+# ============================================================================
+
+defaults:
+  engine: http                 # http | browser(Playwright 兜底)
+  rate_limit: 1.0              # 每 host 每秒请求数
+  timeout: 15
+  retries: 3
+  backoff: [1, 4, 9]           # 秒
+  encoding: utf-8
+  user_agent: "WHUNoticeHubBot/0.1 (+mailto:you@whu.edu.cn)"
+  daily_full_scan: true
+  snapshot_html: true          # 保存原始 HTML 快照，便于回溯改版
+
+sources:
+
+  # --------------------------------------------------------------------------
+  # 1. 武汉大学官网 · 通知公告（校级，最权威的全校汇总）
+  # --------------------------------------------------------------------------
+  - code: whu_main
+    name: 武汉大学官网·通知公告
+    level: university          # university | college | department
+    enabled: true
+    weight: 70                 # 源基线权重（0-100）
+    interval_minutes: 20
+    list:
+      url: https://www.whu.edu.cn/tzgg.htm
+      pagination:
+        mode: path_desc        # [实测] tzgg/260.htm → tzgg/1.htm，首页是 tzgg.htm
+        first_page_url: https://www.whu.edu.cn/tzgg.htm
+        page_url_template: https://www.whu.edu.cn/tzgg/{n}.htm
+        max_page: 261          # [实测] 共 2603 条 / 10 条每页
+        backfill_pages: 3
+      items:
+        xpath: "//table//tr[td]"                       # [实测] 表格行，含表头需跳过
+        fields:
+          title: "./td[1]//a"                          # [实测]
+          url: "./td[1]//a/@href"                      # [实测] 相对路径，需按 base 解析
+          publisher: "./td[2]"                         # [实测] 发布单位：党政办公室、本科生院…
+          published_at: "./td[3]"                      # [实测] 2026-11-20
+        skip_if: "td[1]//a/@href contains '/tzgg/'"
+    detail:
+      title: "//div[contains(@class,'ar_tit')]//h1 | //h2"
+      published_at: "//div[contains(@class,'ar_tit')]//*[contains(text(),'发布时间')]"
+      content: "//div[@id='vsb_content_6'] | //div[contains(@class,'v_news_content')]"
+      attachments: "//a[contains(@href,'download.jsp')]"
+      fallback: readability
+    notes: >
+      列表不是严格按日期倒序（实测 11-20 后面跟着 11-07、11-06），
+      所以增量必须用 url_hash 差集，禁止按日期截断。
+      部分详情页走 new2024/tzggnr.jsp?wbtreeid=5231&wbnewsid=xxx，同一详情解析器兼容。
+
+  # --------------------------------------------------------------------------
+  # 2. 武汉大学计算机学院 · 通知公告（院系，与本专业最相关）
+  # --------------------------------------------------------------------------
+  - code: cs_whu
+    name: 计算机学院·通知公告
+    level: college
+    enabled: true
+    weight: 85                 # 院系通知与个人相关性最高
+    interval_minutes: 15
+    list:
+      url: https://cs.whu.edu.cn/xwdt/tzgg.htm
+      pagination:
+        mode: path_desc        # [实测] tzgg/79.htm → tzgg/1.htm
+        first_page_url: https://cs.whu.edu.cn/xwdt/tzgg.htm
+        page_url_template: https://cs.whu.edu.cn/xwdt/tzgg/{n}.htm
+        max_page: 79
+        backfill_pages: 2
+      items:
+        xpath: "//li[a[contains(@href,'/info/') or contains(@href,'content.jsp')]]"   # [实测]
+        fields:
+          title: "./a/p"                               # [实测] 标题在 a 内 p 中
+          url: "./a/@href"                             # [实测] 有两种：../info/1055/xxx.htm 或 content.jsp?...
+          published_at: "./a/span"                     # [实测] 2026-11-18
+    detail:
+      title: "//h2 | //h1"
+      published_at: "//*[contains(text(),'发布时间')]"   # [实测] h4.information 内
+      content: "//div[@id='vsb_content'] | //div[contains(@class,'article-content')]"
+      attachments: "//a[contains(@href,'download.jsp')]"
+      fallback: readability
+    notes: >
+      详情页存在两种 URL：/info/1055/{id}.htm 与 content.jsp?urltype=news.NewsContentUrl
+      &wbtreeid=1055&wbnewsid={id}，规范化时统一映射到同一 canonical url 以便去重。
+      子栏目可复制此配置扩展：/kxyj/xsjl.htm（学术交流）、/dqgz/djgz.htm（党建）、
+      /rczp/szgwzp.htm（招聘）。
+
+  # --------------------------------------------------------------------------
+  # 3. 武汉大学信息公开网 · 最新公开（校级，公开栏无需登录）
+  # --------------------------------------------------------------------------
+  - code: whu_info_public
+    name: 信息公开网·最新公开
+    level: university
+    enabled: false            # 内容多为信息公开年报/招生简章，本科生相关性低，默认关闭
+    weight: 65
+    interval_minutes: 60
+    list:
+      url: https://info.whu.edu.cn/gz/zxgk.htm
+      pagination: { mode: none, backfill_pages: 1 }
+      items:
+        # [实测] div.list > ul > li > a > p(标题) + span(日期)，与计院同构
+        xpath: "//div[contains(@class,'list')]//li[a[p][span]]"
+        fields:
+          title: "./a/p"
+          url: "./a/@href"
+          published_at: "./a/span"
+    detail:
+      title: "//h2 | //h1 | //div[contains(@class,'tit')]"
+      content: "//div[@id='vsb_content'] | //div[contains(@class,'article')]"
+      fallback: readability
+    notes: >
+      学生/教工通知栏（tzgg_list2.jsp?wbtreeid=1044/1045/2381/1173）会 302 到
+      cas.whu.edu.cn，属登录内容，本配置不接入；如后续需要，仅支持用户自带 cookie 的
+      本地可选模块，且默认关闭。
+
+  # --------------------------------------------------------------------------
+  # 4. 武汉大学研究生院 · 通知公告（部处）
+  # --------------------------------------------------------------------------
+  - code: gs_whu
+    name: 研究生院·通知公告
+    level: department
+    enabled: false             # 先 dry-run 校准 selector，再置 true
+    weight: 78
+    interval_minutes: 30
+    list:
+      url: https://gs.whu.edu.cn/tzgg.htm            # [实测] HTTP 200
+      pagination: { mode: path_desc, page_url_template: "https://gs.whu.edu.cn/tzgg/{n}.htm", max_page: 200, backfill_pages: 2 }   # [待校准]
+      items:
+        xpath: "//li[a[contains(@href,'/info/')]]"   # [待校准]
+        fields:
+          title: "./a"
+          url: "./a/@href"
+          published_at: "."
+    detail:
+      title: "//h2 | //h1"
+      content: "//div[@id='vsb_content']"
+      fallback: readability
+
+  # --------------------------------------------------------------------------
+  # 5. 新站点模板：复制后填 URL，跑 `crawl --dry-run --source <code>` 校准
+  # --------------------------------------------------------------------------
+  - code: TEMPLATE
+    name: 某某学院·通知公告
+    level: college             # university | college | department
+    enabled: false
+    weight: 75
+    interval_minutes: 30
+    list:
+      url: https://example.whu.edu.cn/tzgg.htm
+      pagination:
+        mode: path_desc        # path_desc | query | load_more | none
+        # query 模式示例：page_url_template: "https://x.whu.edu.cn/tzgg.htm?page={n}"
+        max_page: 50
+        backfill_pages: 2
+      items:
+        xpath: "//li[a]"       # 用浏览器 F12 找到"一条记录"的重复节点
+        fields:
+          title: "./a"
+          url: "./a/@href"
+          published_at: "."    # 若日期在 li 的 span 里写 "./span"
+    detail:
+      title: "//h2 | //h1"
+      published_at: "//*[contains(text(),'发布时间') or contains(text(),'发布日期')]"
+      content: "//div[@id='vsb_content'] | //div[contains(@class,'article')]"
+      attachments: "//a[contains(@href,'download') or contains(@href,'.pdf') or contains(@href,'.docx')]"
+      fallback: readability    # selector 失效时自动退化为正文自动抽取
+
+# ----------------------------------------------------------------------------
+# 抓取策略（全局）
+# ----------------------------------------------------------------------------
+crawl_policy:
+  incremental_interval_minutes: 20
+  full_scan_cron: "0 3 * * *"        # 每日 03:00 全量回扫，兜底漏抓
+  full_scan_pages: 5
+  max_requests_per_run: 200
+  stop_when_page_all_known: true
+  respect_robots: true
+  alert_after_consecutive_failures: 3
+  drift_thresholds:
+    min_items: 1
+    min_date_parse_rate: 0.8
+    min_title_nonempty_rate: 0.95
