@@ -127,7 +127,7 @@ def push_high_importance(conn: sqlite3.Connection, dry_run: bool = False) -> int
     for row in rows:
         conn.execute(
             """INSERT OR IGNORE INTO deliveries (notice_id, subscription_id, channel, kind, status, sent_at)
-               VALUES (?,?, 'email','instant','sent', datetime('now'))""",
+               VALUES (?,?, 'email','instant','sent', datetime('now','localtime'))""",
             (row["id"], sub_id),
         )
     conn.commit()
