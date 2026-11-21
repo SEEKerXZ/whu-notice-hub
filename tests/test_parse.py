@@ -172,6 +172,19 @@ def test_clean_body_removes_breadcrumb():
     assert "当前位置" not in cleaned
 
 
+def test_parse_detail_waf_page_is_protected_not_restricted():
+    """WAF 验证码页：应标记 protected（限流），不当成"永久不可访问"。"""
+    html = """
+    <html><head><title>用户验证</title></head><body>
+      <form><input name="visitcode">
+      <p>您的IP是：1.2.3.4，由于您访问太过频繁，请输入验证码后访问。</p>
+    </body></html>
+    """
+    detail = parse.parse_detail(html, _main_source(), "https://cs.whu.edu.cn/content.jsp?wbnewsid=1")
+    assert detail.protected is True
+    assert detail.restricted is False
+
+
 def test_parse_info_list():
     source = Source(
         code="whu_info_public", name="信息公开", level="university",

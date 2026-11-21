@@ -24,7 +24,17 @@ def connect(db_path: str | Path | None = None) -> sqlite3.Connection:
 
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA_FILE.read_text(encoding="utf-8"))
+    _migrate(conn)
     conn.commit()
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """轻量迁移：给老库补新列。"""
+    cols = {row["name"] for row in conn.execute("PRAGMA table_info(notices)")}
+    if "restricted" not in cols:
+        conn.execute("ALTER TABLE notices ADD COLUMN restricted INTEGER NOT NULL DEFAULT 0")
+    if "fallback_url" not in cols:
+        conn.execute("ALTER TABLE notices ADD COLUMN fallback_url TEXT")
 
 
 def now() -> str:
@@ -117,17 +127,29 @@ def get_notice(conn: sqlite3.Connection, url_hash: str) -> sqlite3.Row | None:
 
 
 def save_notice(conn: sqlite3.Connection, payload: dict) -> str:
-    """插入或更新通知，返回 new / updated / unchanged。"""
+    """插入或更新通知，返回 new / updated / unchanged / duplicate。"""
     existing = get_notice(conn, payload["url_hash"])
     if existing is None:
+        # 同一通知常被发布在多个栏目（如"通知公告"和"党建"），按标题+发布日期去重
+        dup = conn.execute(
+            """SELECT id FROM notices
+                WHERE title_norm = ?
+                  AND url_hash <> ?
+                  AND COALESCE(published_at, '') = COALESCE(?, '')
+                LIMIT 1""",
+            (payload.get("title_norm", ""), payload["url_hash"], payload.get("published_at")),
+        ).fetchone()
+        if dup is not None:
+            return "duplicate"
+
         status = payload.get("status", "new")
         conn.execute(
             """INSERT INTO notices
                  (source_code, url, url_hash, title, title_norm, publisher, published_at,
                   date_inferred, category, summary, content_md, content_hash, audience_json,
-                  action_items_json, deadline_date, importance, status,
+                  action_items_json, deadline_date, importance, status, restricted, fallback_url,
                   first_seen_at, last_seen_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 payload["source_code"], payload["url"], payload["url_hash"],
                 payload["title"], payload["title_norm"], payload.get("publisher"),
@@ -137,7 +159,9 @@ def save_notice(conn: sqlite3.Connection, payload: dict) -> str:
                 json.dumps(payload.get("audience", []), ensure_ascii=False),
                 json.dumps(payload.get("action_items", []), ensure_ascii=False),
                 payload.get("deadline_date"),
-                int(payload.get("importance", 50)), status, now(), now(), now(),
+                int(payload.get("importance", 50)), status,
+                int(payload.get("restricted", 0)), payload.get("fallback_url"),
+                now(), now(), now(),
             ),
         )
         conn.commit()

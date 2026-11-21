@@ -5,13 +5,14 @@
   <a href="/">首页</a><span>/</span>
   <a href="/category/{{ n.category|urlencode }}">{{ n.category }}</a><span>/</span>
   <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a><span>/</span>
-  <span>正文</span>
+  <span>概览</span>
 </div>
 
 <article class="article">
   <div class="detail-meta">
     <span class="score {% if n.importance >= 80 %}s-hi{% elif n.importance >= 60 %}s-mid{% else %}s-low{% endif %}">{{ n.importance }}</span>
     <a class="tag {{ n.category|cat_class }}" href="/category/{{ n.category|urlencode }}"><span class="dot"></span>{{ n.category }}</a>
+    {% if n.restricted %}<span class="tag locked">🔒 仅校内可见</span>{% endif %}
     <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a>
     <span>·</span>
     <span>{{ n.published_at or n.first_seen_at[:10] }}</span>
@@ -25,11 +26,24 @@
 
   <h1 class="title">{{ n.title }}</h1>
 
-  <div class="detail-meta">
-    <a href="{{ n.url }}" target="_blank" rel="noopener">查看原文 ↗</a>
-  </div>
-
   {% if n.summary %}<p class="callout">{{ n.summary }}</p>{% endif %}
+
+  <div class="panel">
+    <h3>概览</h3>
+    <p style="margin:0;font-size:13.5px;color:var(--fg-2)">
+      本站只收录通知的标题与基本信息，不转载正文。完整内容、附件与表格请通过下方链接查看原文。
+    </p>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      {% if n.restricted or 'content.jsp' in n.url or 'tzggnr.jsp' in n.url %}
+        {% if n.fallback_url %}<a class="btn" href="{{ n.fallback_url }}" target="_blank" rel="noopener">前往列表页查看 ↗</a>{% endif %}
+      {% else %}
+        <a class="btn" href="{{ n.url }}" target="_blank" rel="noopener">查看原文 ↗</a>
+      {% endif %}
+      {% if 'content.jsp' in n.url or 'tzggnr.jsp' in n.url %}
+        <span class="tag locked">该详情页校外访问需验证，请到列表页或连接校园网查看</span>
+      {% endif %}
+    </div>
+  </div>
 
   {% if n.audience %}
     <div class="panel">
@@ -39,22 +53,6 @@
       </div>
     </div>
   {% endif %}
-
-  {% if n.action_items %}
-    <div class="panel">
-      <h3>要做什么</h3>
-      <ul>{% for a in n.action_items %}<li>{{ a }}</li>{% endfor %}</ul>
-    </div>
-  {% endif %}
-
-  {% if attachments %}
-    <div class="panel">
-      <h3>附件</h3>
-      <ul>{% for a in attachments %}<li>📎 <a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.name or '附件' }}</a></li>{% endfor %}</ul>
-    </div>
-  {% endif %}
-
-  <div class="body">{{ n.content_md or '（未抓到正文，请查看原文）' }}</div>
 
   {% if versions %}
     <p style="font-size:12px;color:var(--muted);margin-top:24px">

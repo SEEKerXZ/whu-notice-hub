@@ -1,15 +1,19 @@
-"""抓取编排：列表 → 差集 → 详情 → 抽取 → 入库。"""
+"""抓取编排：列表 → 差集 → 详情 → 抽取 → 入库。
+
+对 WAF 限流（验证码页）的处理：不做验证码识别，命中即熔断该 host，
+本轮跳过；已被限流保护的"公示类"通知按标题级入库（restricted=1），
+站内展示标题与来源、链接指向公开列表页。
+"""
 from __future__ import annotations
 
 import logging
 import os
+import sqlite3
 from dataclasses import dataclass, field
 from typing import Callable
 
-import sqlite3
-
 from . import db, parse, score, text
-from .fetch import Fetcher
+from .fetch import Fetcher, RateLimited
 from .sources import Source
 
 log = logging.getLogger(__name__)
@@ -22,11 +26,46 @@ class SourceResult:
     seen: int = 0
     new: int = 0
     updated: int = 0
-    skipped: int = 0
+    skipped: int = 0      # 受众过滤掉的
+    limited: int = 0      # 需校内权限/被限流，按标题级接入
+    duplicate: int = 0    # 同标题同日期已在其他栏目存在
     errors: int = 0
     status: str = "ok"
     error: str | None = None
     titles: list[str] = field(default_factory=list)
+
+
+def _save_limited(conn: sqlite3.Connection, source: Source, item: parse.RawItem,
+                  url_hash: str, list_url: str, protected: bool) -> None:
+    """受限/被限流通知：只存标题级信息，链接回退到公开列表页。"""
+    title = item.title
+    category = text.guess_category(title, "")
+    summary = (
+        "该通知需校内权限查看（校外访问会触发验证码），标题与日期来自列表页；"
+        "请登录校内门户或到列表页查看原文。"
+        if protected else
+        "该通知详情页对外不可见（暂无权限/404），标题与日期来自列表页。"
+    )
+    db.save_notice(conn, {
+        "source_code": source.code,
+        "url": item.url,
+        "url_hash": url_hash,
+        "title": title,
+        "title_norm": text.normalize_title(title),
+        "publisher": item.publisher,
+        "published_at": text.iso(text.parse_date(item.published_at)) if item.published_at else None,
+        "date_inferred": 0,
+        "category": category,
+        "summary": summary,
+        "content_md": "",
+        "content_hash": "restricted",
+        "audience": text.guess_audience(title),
+        "action_items": [],
+        "deadline_date": None,
+        "importance": 30,
+        "restricted": 1,
+        "fallback_url": list_url,
+    })
 
 
 def crawl_source(conn: sqlite3.Connection, source: Source, fetcher: Fetcher,
@@ -42,6 +81,11 @@ def crawl_source(conn: sqlite3.Connection, source: Source, fetcher: Fetcher,
             progress(f"[{source.code}] 列表页 {page_url}")
             try:
                 page_html = fetcher.get_text(page_url)
+            except RateLimited:
+                result.status = "throttled"
+                result.error = "WAF 限流，本轮跳过该信源"
+                log.warning("[%s] 列表页被限流，跳过", source.code)
+                break
             except Exception as exc:  # noqa: BLE001
                 result.errors += 1
                 result.error = str(exc)
@@ -63,42 +107,71 @@ def crawl_source(conn: sqlite3.Connection, source: Source, fetcher: Fetcher,
 
             for item in new_items:
                 url_hash = text.url_hash(item.url)
-                detail = parse.Detail()
-                try:
-                    detail_html = fetcher.get_text(item.url)
-                    detail = parse.parse_detail(detail_html, source, item.url, item.published_at)
-                except Exception as exc:  # noqa: BLE001
-                    result.errors += 1
-                    log.warning("[%s] 详情失败 %s: %s", source.code, item.url, exc)
+                if dry_run:
+                    result.new += 1
+                    result.titles.append(item.title)
+                    known.add(url_hash)
+                    continue
 
-                title = parse.choose_title(item.title, detail.title)
-
-                # 受限通知（"暂无权限"）：入库但标记 archived，避免站点展示无法打开的通知，
-                # 同时防止每轮重复抓取该页面。
-                if detail.restricted and not dry_run:
-                    db.save_notice(conn, {
+                # 默认只抓列表页：站点只展示标题与概览，正文交给原文链接。
+                # 需要摘要/截止日期时再把 DETAIL_ENABLED 设为 1（会增加请求量与被限流风险）。
+                if os.getenv("DETAIL_ENABLED", "0") != "1":
+                    title = item.title
+                    category = text.guess_category(title, "")
+                    state = db.save_notice(conn, {
                         "source_code": source.code,
                         "url": item.url,
                         "url_hash": url_hash,
                         "title": title,
                         "title_norm": text.normalize_title(title),
                         "publisher": item.publisher,
-                        "published_at": text.iso(text.parse_date(item.published_at)) if item.published_at else None,
-                        "date_inferred": 0,
-                        "category": "其他",
+                        "published_at": text.iso(text.parse_date(item.published_at))
+                                        if item.published_at else None,
+                        "date_inferred": 0 if item.published_at else 1,
+                        "category": category,
                         "summary": None,
                         "content_md": "",
-                        "content_hash": "restricted",
-                        "audience": [],
+                        "content_hash": "list-only",
+                        "audience": text.guess_audience(title),
                         "action_items": [],
                         "deadline_date": None,
-                        "importance": 0,
-                        "status": "archived",
+                        "importance": score.importance(
+                            source.weight, category, None,
+                            text.parse_date(item.published_at), title, ""),
+                        "restricted": 0,
+                        "fallback_url": page_url,
                     })
-                    result.skipped += 1
+                    if state == "new":
+                        result.new += 1
+                    elif state == "duplicate":
+                        result.duplicate += 1
                     known.add(url_hash)
                     continue
 
+                detail = parse.Detail()
+                limited_reason: str | None = None
+                try:
+                    detail_html = fetcher.get_text(item.url)
+                    detail = parse.parse_detail(detail_html, source, item.url, item.published_at)
+                    if detail.protected:
+                        limited_reason = "protected"
+                    elif detail.restricted:
+                        limited_reason = "restricted"
+                except RateLimited:
+                    limited_reason = "protected"
+                    log.info("[%s] 详情被限流，按标题级接入: %s", source.code, item.url)
+                except Exception as exc:  # noqa: BLE001
+                    result.errors += 1
+                    log.warning("[%s] 详情失败 %s: %s", source.code, item.url, exc)
+
+                if limited_reason:
+                    _save_limited(conn, source, item, url_hash, page_url,
+                                  protected=(limited_reason == "protected"))
+                    result.limited += 1
+                    known.add(url_hash)
+                    continue
+
+                title = parse.choose_title(item.title, detail.title)
                 body = detail.content_text
                 published = detail.published_at or (
                     text.iso(text.parse_date(item.published_at)) if item.published_at else None
@@ -111,11 +184,6 @@ def crawl_source(conn: sqlite3.Connection, source: Source, fetcher: Fetcher,
                 ):
                     result.skipped += 1
                     known.add(url_hash)
-                    continue
-
-                if dry_run:
-                    result.new += 1
-                    result.titles.append(title)
                     continue
 
                 payload = {
@@ -142,6 +210,8 @@ def crawl_source(conn: sqlite3.Connection, source: Source, fetcher: Fetcher,
                     db.save_attachments(conn, url_hash, detail.attachments)
                 elif state == "updated":
                     result.updated += 1
+                elif state == "duplicate":
+                    result.duplicate += 1
                 known.add(url_hash)
 
             # 增量模式：整页都已知 → 没有更新的历史，停止翻页
@@ -160,7 +230,8 @@ def crawl_source(conn: sqlite3.Connection, source: Source, fetcher: Fetcher,
                 updated=result.updated, http_errors=result.errors,
                 error=result.error,
             )
-            db.mark_source_result(conn, source.code, ok=result.errors == 0 and result.status == "ok",
+            db.mark_source_result(conn, source.code,
+                                  ok=result.errors == 0 and result.status == "ok",
                                   error=result.error)
     return result
 

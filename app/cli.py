@@ -71,13 +71,17 @@ def cmd_crawl(args) -> int:
 
     results = crawl.crawl_all(conn, selected, progress=progress)
     print("\n抓取结果：")
-    print(f"{'source':<18}{'pages':>6}{'seen':>6}{'new':>6}{'updated':>8}{'skipped':>8}{'errors':>7}  status")
+    print(f"{'source':<18}{'pages':>6}{'seen':>6}{'new':>6}{'updated':>8}{'skip':>6}{'limited':>8}{'dup':>5}{'err':>5}  status")
     for r in results:
-        print(f"{r.code:<18}{r.pages:>6}{r.seen:>6}{r.new:>6}{r.updated:>8}{r.skipped:>8}{r.errors:>7}  {r.status}"
+        print(f"{r.code:<18}{r.pages:>6}{r.seen:>6}{r.new:>6}{r.updated:>8}"
+              f"{r.skipped:>6}{r.limited:>8}{r.duplicate:>5}{r.errors:>5}  {r.status}"
               + (f" ({r.error})" if r.error else ""))
     total_new = sum(r.new for r in results)
     total_skipped = sum(r.skipped for r in results)
-    print(f"\n新增 {total_new} 条（按受众过滤掉 {total_skipped} 条），当前库内共 {db.count_notices(conn)} 条。")
+    total_limited = sum(r.limited for r in results)
+    total_dup = sum(r.duplicate for r in results)
+    print(f"\n新增 {total_new} 条（受众过滤 {total_skipped}，标题级 {total_limited}，跨栏目重复 {total_dup}），"
+          f"当前库内共 {db.count_notices(conn)} 条。")
     return 0
 
 

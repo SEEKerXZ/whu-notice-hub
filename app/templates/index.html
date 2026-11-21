@@ -86,6 +86,7 @@
     <div class="meta">
       <span class="score {% if n.importance >= 80 %}s-hi{% elif n.importance >= 60 %}s-mid{% else %}s-low{% endif %}">{{ n.importance }}</span>
       <a class="tag {{ n.category|cat_class }}" href="/category/{{ n.category|urlencode }}"><span class="dot"></span>{{ n.category }}</a>
+      {% if n.restricted %}<span class="tag locked">🔒 仅校内</span>{% endif %}
       <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a>
       <span class="sep">·</span>
       <span>{{ n.published_at or n.first_seen_at[:10] }}{% if n.date_inferred %}（推断）{% endif %}</span>
@@ -95,7 +96,11 @@
           ⏰ {{ n.deadline_date }}{% if d is not none %}{% if d < 0 %}（已过期）{% elif d == 0 %}（今天）{% else %}（剩 {{ d }} 天）{% endif %}{% endif %}
         </span>
       {% endif %}
-      <a href="{{ n.url }}" target="_blank" rel="noopener">原文 ↗</a>
+      {% if n.restricted or 'content.jsp' in n.url or 'tzggnr.jsp' in n.url %}
+        {% if n.fallback_url %}<a href="{{ n.fallback_url }}" target="_blank" rel="noopener">列表页 ↗</a>{% endif %}
+      {% else %}
+        <a href="{{ n.url }}" target="_blank" rel="noopener">原文 ↗</a>
+      {% endif %}
     </div>
     {% if n.summary %}<p class="summary">{{ n.summary }}</p>{% endif %}
   </article>

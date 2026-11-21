@@ -14,13 +14,13 @@ def conn(tmp_path):
     c.close()
 
 
-def _payload(url: str, status: str = "new") -> dict:
+def _payload(url: str, status: str = "new", title: str = "测试通知") -> dict:
     return {
         "source_code": "whu_main",
         "url": url,
         "url_hash": __import__("hashlib").sha1(url.encode()).hexdigest(),
-        "title": "测试通知",
-        "title_norm": "测试通知",
+        "title": title,
+        "title_norm": title,
         "published_at": "2026-11-20",
         "category": "教务",
         "summary": None,
@@ -35,8 +35,8 @@ def _payload(url: str, status: str = "new") -> dict:
 
 
 def test_archived_hidden_from_queries(conn):
-    db.save_notice(conn, _payload("https://x/visible"))
-    db.save_notice(conn, _payload("https://x/restricted", status="archived"))
+    db.save_notice(conn, _payload("https://x/visible", title="可见通知"))
+    db.save_notice(conn, _payload("https://x/restricted", status="archived", title="隐藏通知"))
 
     assert db.count_notices(conn) == 1
     assert db.archived_count(conn) == 1
@@ -48,8 +48,24 @@ def test_archived_hidden_from_queries(conn):
     assert months[0]["c"] == 1
 
 
-def test_archived_still_blocks_duplicate_fetch(conn):
-    db.save_notice(conn, _payload("https://x/restricted", status="archived"))
-    known = db.known_hashes(conn, "whu_main")
-    import hashlib
-    assert hashlib.sha1(b"https://x/restricted").hexdigest() in known
+def test_duplicate_title_same_day_rejected(conn):
+    first = _payload("https://x/a1")
+    second = _payload("https://x/a2")   # 不同 URL，但标题+日期相同
+    assert db.save_notice(conn, first) == "new"
+    assert db.save_notice(conn, second) == "duplicate"
+    assert db.count_notices(conn) == 1
+
+
+def test_restricted_notice_saved_with_fallback(conn):
+    payload = _payload("https://x/locked", status="new")
+    payload.update({
+        "restricted": 1,
+        "fallback_url": "https://x/list.htm",
+        "summary": "该通知需校内权限查看",
+        "content_md": "",
+        "importance": 30,
+    })
+    db.save_notice(conn, payload)
+    row = db.query_notices(conn)[0]
+    assert row["restricted"] == 1
+    assert row["fallback_url"] == "https://x/list.htm"

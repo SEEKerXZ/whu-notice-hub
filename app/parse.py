@@ -19,6 +19,7 @@ JUNK_TITLES = {
     "最新公开", "学校基本信息", "依申请公开流程",
 }
 ERROR_MARKERS = ("暂无权限", "页面不存在", "内容不存在", "您访问的页面", "404 Not Found")
+WAF_MARKERS = ("用户验证", "访问太过频繁", "请输入验证码")
 DEFAULT_ATTACHMENT_XPATH = (
     "//a[contains(@href,'download.jsp') or contains(@href,'.pdf') "
     "or contains(@href,'.docx') or contains(@href,'.doc') "
@@ -41,6 +42,7 @@ class Detail:
     content_text: str = ""
     attachments: list[dict] = field(default_factory=list)
     restricted: bool = False   # True = 该页返回"暂无权限/404"等错误页，对外不可访问
+    protected: bool = False    # True = 被 WAF 验证码拦截（限流），稍后重试可能成功
 
 
 def _extract(node, expr: str) -> str:
@@ -195,10 +197,21 @@ def parse_detail(page_html: str, source: Source, url: str, list_date: str | None
         body = _auto_body(doc)
     detail.content_text = clean_body(text.strip_html(body))
 
-    # 错误页（如"暂无权限/404"）：不要污染标题和正文，交给调用方按"受限通知"处理。
-    # 注意：错误提示文字可能不在正文块里，必须检查整页文本。
+    # WAF 验证码页：说明被限流，不代表内容真的不可访问
     full_text = doc.xpath("string(//body)")
     page_title = _extract(doc, "//title")
+    if any(marker in full_text for marker in WAF_MARKERS) or any(
+        marker in page_title for marker in WAF_MARKERS
+    ):
+        log.info("WAF 验证页: %s", url)
+        detail.protected = True
+        detail.title = ""
+        detail.content_text = ""
+        detail.attachments = []
+        return detail
+
+    # 错误页（如"暂无权限/404"）：不要污染标题和正文，交给调用方按"受限通知"处理。
+    # 注意：错误提示文字可能不在正文块里，必须检查整页文本。
     if (
         any(marker in full_text for marker in ERROR_MARKERS)
         or any(marker in page_title for marker in (*ERROR_MARKERS, "系统提示", "404错误提示"))
