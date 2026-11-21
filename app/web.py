@@ -22,6 +22,32 @@ from . import db
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
+# 分类配色：用于标签小圆点/胶囊
+CATEGORY_CLASS = {
+    "招生": "c-blue", "考试": "c-red", "奖助": "c-amber", "教务": "c-violet",
+    "公示": "c-slate", "生活服务": "c-green", "竞赛": "c-pink",
+    "科研": "c-cyan", "人事": "c-gray", "招聘": "c-gray", "讲座": "c-indigo",
+    "会议": "c-gray", "其他": "c-gray",
+}
+
+
+def _cat_class(value: object) -> str:
+    return CATEGORY_CLASS.get(str(value), "c-gray")
+
+
+def _days_left(value: object) -> int | None:
+    """截止日期距今天数；已过期为负数。"""
+    if not value:
+        return None
+    try:
+        return (date.fromisoformat(str(value)[:10]) - date.today()).days
+    except ValueError:
+        return None
+
+
+templates.env.filters["cat_class"] = _cat_class
+templates.env.filters["days_left"] = _days_left
+
 app = FastAPI(title="WHU Notice Hub", version="0.1.0",
               description="武汉大学本科生通知聚合 · 公开只读服务")
 

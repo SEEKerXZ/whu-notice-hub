@@ -3,8 +3,9 @@
 
 {% if overview %}
 <section class="hero">
+  <div class="hero-eyebrow">Undergraduate Notices</div>
   <div class="hero-title">武汉大学本科生通知聚合</div>
-  <div class="hero-sub">官网 · 学院 · 只收录本科生相关通知，自动去重、抽取截止日期</div>
+  <div class="hero-sub">官网 · 学院 · 信息公开网　｜　自动去重、识别受众、抽取截止日期</div>
   <div class="stats">
     <a class="stat" href="/archive"><b>{{ overview.today_new }}</b><span>今日新增</span></a>
     <a class="stat" href="/?deadline=1"><b>{{ overview.upcoming }}</b><span>7 天内截止</span></a>
@@ -16,32 +17,40 @@
 </section>
 
 {% if overview.important %}
-<section class="important">
-  <div class="sec-title">🔥 重点通知</div>
+<section class="section">
+  <div class="sec-head"><h2>🔥 重点通知</h2><span class="hint">按重要度排序</span></div>
   <div class="imp-grid">
     {% for n in overview.important %}
-      <a class="imp-card" href="/notice/{{ n.id }}">
+      <a class="imp-card {% if n.importance >= 70 %}lv3{% elif n.importance >= 60 %}lv2{% else %}lv1{% endif %}" href="/notice/{{ n.id }}">
         <div class="imp-meta">
-          <span class="badge {% if n.importance >= 70 %}b-hi{% elif n.importance >= 60 %}b-mid{% else %}b-low{% endif %}">{{ n.importance }}</span>
-          <span class="tag">{{ n.category }}</span>
+          <span class="score {% if n.importance >= 85 %}s-hi{% elif n.importance >= 65 %}s-mid{% else %}s-low{% endif %}">{{ n.importance }}</span>
+          <span class="tag {{ n.category|cat_class }}"><span class="dot"></span>{{ n.category }}</span>
           <span>{{ n.published_at or '' }}</span>
         </div>
         <div class="imp-title">{{ n.title }}</div>
-        {% if n.deadline_date %}<div class="imp-deadline">⏰ 截止 {{ n.deadline_date }}</div>{% endif %}
+        {% if n.deadline_date %}
+          {% set d = n.deadline_date|days_left %}
+          <div class="imp-deadline">⏰ 截止 {{ n.deadline_date }}{% if d is not none and d >= 0 %} · 剩 {{ d }} 天{% endif %}</div>
+        {% endif %}
       </a>
     {% endfor %}
   </div>
 </section>
 {% endif %}
 
-<section class="cats">
-  {% for c in overview.category_counts %}
-    <a class="chip" href="/category/{{ c.category|urlencode }}">{{ c.category }} <em>{{ c.c }}</em></a>
-  {% endfor %}
+<section class="section">
+  <div class="sec-head"><h2>按分类浏览</h2><span class="hint">点击进入分类页</span></div>
+  <div class="chips">
+    {% for c in overview.category_counts %}
+      <a class="chip {{ c.category|cat_class }}" href="/category/{{ c.category|urlencode }}">
+        <span class="dot"></span>{{ c.category }} <em>{{ c.c }}</em>
+      </a>
+    {% endfor %}
+  </div>
 </section>
 {% else %}
-<div class="crumbs"><a href="/">首页</a> / {{ page_title }}</div>
-<div class="page-head"><h2>{{ page_title }}</h2></div>
+<div class="crumbs"><a href="/">首页</a><span>/</span><span>{{ page_title }}</span></div>
+<div class="page-head"><h1>{{ page_title }}</h1></div>
 {% endif %}
 
 <form class="filters" method="get" action="{{ base_path }}">
@@ -58,40 +67,46 @@
     {% endfor %}
   </select>
   <input type="text" name="q" value="{{ filters.q }}" placeholder="搜索标题或正文…">
-  <input type="number" name="min_score" value="{{ filters.min_score }}" placeholder="最低重要度" min="0" max="100" style="width:110px">
+  <input type="number" name="min_score" value="{{ filters.min_score }}" placeholder="最低重要度" min="0" max="100">
   <label class="chk"><input type="checkbox" name="deadline" value="1" {% if filters.deadline %}checked{% endif %}> 仅看有截止日期</label>
-  <button type="submit">筛选</button>
+  <button class="btn" type="submit">筛选</button>
   {% if filters.source or filters.category or filters.q or filters.min_score or filters.deadline %}
-    <a href="/" class="reset">重置</a>
+    <a class="btn ghost" href="/">重置</a>
   {% endif %}
 </form>
 
 {% if not items %}
-  <div class="empty">没有符合条件的通知。</div>
+  <div class="empty">没有符合条件的通知</div>
 {% endif %}
 
+<div class="list">
 {% for n in items %}
-  <div class="item">
-    <h2><a href="/notice/{{ n.id }}">{{ n.title }}</a></h2>
+  <article class="item">
+    <h2 class="item-title"><a href="/notice/{{ n.id }}">{{ n.title }}</a></h2>
     <div class="meta">
-      {% if n.importance >= 80 %}<span class="badge b-hi">{{ n.importance }}</span>
-      {% elif n.importance >= 60 %}<span class="badge b-mid">{{ n.importance }}</span>
-      {% else %}<span class="badge b-low">{{ n.importance }}</span>{% endif %}
-      <a class="tag" href="/category/{{ n.category|urlencode }}">{{ n.category }}</a>
+      <span class="score {% if n.importance >= 80 %}s-hi{% elif n.importance >= 60 %}s-mid{% else %}s-low{% endif %}">{{ n.importance }}</span>
+      <a class="tag {{ n.category|cat_class }}" href="/category/{{ n.category|urlencode }}"><span class="dot"></span>{{ n.category }}</a>
       <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a>
+      <span class="sep">·</span>
       <span>{{ n.published_at or n.first_seen_at[:10] }}{% if n.date_inferred %}（推断）{% endif %}</span>
-      {% if n.deadline_date %}<span class="deadline">⏰ 截止 {{ n.deadline_date }}</span>{% endif %}
+      {% if n.deadline_date %}
+        {% set d = n.deadline_date|days_left %}
+        <span class="due {% if d is not none and 0 <= d <= 3 %}soon{% endif %}">
+          ⏰ {{ n.deadline_date }}{% if d is not none %}{% if d < 0 %}（已过期）{% elif d == 0 %}（今天）{% else %}（剩 {{ d }} 天）{% endif %}{% endif %}
+        </span>
+      {% endif %}
       <a href="{{ n.url }}" target="_blank" rel="noopener">原文 ↗</a>
     </div>
     {% if n.summary %}<p class="summary">{{ n.summary }}</p>{% endif %}
-  </div>
+  </article>
 {% endfor %}
+</div>
 
 <div class="pager">
   {% if page > 1 %}
     <a href="{{ base_path }}?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'min_score': filters.min_score, 'deadline': filters.deadline, 'page': page-1}|urlencode }}">← 上一页</a>
   {% else %}<span class="off">← 上一页</span>{% endif %}
-  <span class="off">第 {{ page }} 页</span>
+  <span class="pos">第 {{ page }} 页</span>
   {% if has_next %}
     <a href="{{ base_path }}?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'min_score': filters.min_score, 'deadline': filters.deadline, 'page': page+1}|urlencode }}">下一页 →</a>
   {% else %}<span class="off">下一页 →</span>{% endif %}

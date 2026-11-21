@@ -2,41 +2,55 @@
 {% block title %}{{ n.title }} · WHU Notice Hub{% endblock %}
 {% block content %}
 <div class="crumbs">
-  <a href="/">首页</a> / <a href="/category/{{ n.category|urlencode }}">{{ n.category }}</a> / <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a> / 正文
+  <a href="/">首页</a><span>/</span>
+  <a href="/category/{{ n.category|urlencode }}">{{ n.category }}</a><span>/</span>
+  <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a><span>/</span>
+  <span>正文</span>
 </div>
 
 <article class="article">
-  <div class="meta">
-    {% if n.importance >= 80 %}<span class="badge b-hi">{{ n.importance }}</span>
-    {% elif n.importance >= 60 %}<span class="badge b-mid">{{ n.importance }}</span>
-    {% else %}<span class="badge b-low">{{ n.importance }}</span>{% endif %}
-    <a class="tag" href="/category/{{ n.category|urlencode }}">{{ n.category }}</a>
+  <div class="detail-meta">
+    <span class="score {% if n.importance >= 80 %}s-hi{% elif n.importance >= 60 %}s-mid{% else %}s-low{% endif %}">{{ n.importance }}</span>
+    <a class="tag {{ n.category|cat_class }}" href="/category/{{ n.category|urlencode }}"><span class="dot"></span>{{ n.category }}</a>
     <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a>
+    <span>·</span>
     <span>{{ n.published_at or n.first_seen_at[:10] }}</span>
-    {% if n.deadline_date %}<span class="deadline">⏰ 截止 {{ n.deadline_date }}</span>{% endif %}
-  </div>
-  <h1>{{ n.title }}</h1>
-  <div class="meta">
-    <a href="{{ n.url }}" target="_blank" rel="noopener">查看原文 ↗</a>
     {% if n.status == 'updated' %}<span class="tag">已更新</span>{% endif %}
     {% if n.date_inferred %}<span class="tag">日期推断</span>{% endif %}
+    {% if n.deadline_date %}
+      {% set d = n.deadline_date|days_left %}
+      <span class="due {% if d is not none and 0 <= d <= 3 %}soon{% endif %}">⏰ 截止 {{ n.deadline_date }}{% if d is not none %}{% if d < 0 %}（已过期）{% else %}（剩 {{ d }} 天）{% endif %}{% endif %}</span>
+    {% endif %}
   </div>
 
-  {% if n.summary %}<p class="summary" style="font-size:14px;color:#3d444d">{{ n.summary }}</p>{% endif %}
+  <h1 class="title">{{ n.title }}</h1>
+
+  <div class="detail-meta">
+    <a href="{{ n.url }}" target="_blank" rel="noopener">查看原文 ↗</a>
+  </div>
+
+  {% if n.summary %}<p class="callout">{{ n.summary }}</p>{% endif %}
 
   {% if n.audience %}
-    <p style="font-size:13px">适用对象：{% for a in n.audience %}<span class="tag">{{ a }}</span> {% endfor %}</p>
+    <div class="panel">
+      <h3>适用对象</h3>
+      <div class="chips">
+        {% for a in n.audience %}<span class="chip">{{ a }}</span>{% endfor %}
+      </div>
+    </div>
   {% endif %}
 
   {% if n.action_items %}
-    <div><strong style="font-size:14px">要做什么</strong>
-      <ul class="actions">{% for a in n.action_items %}<li>{{ a }}</li>{% endfor %}</ul>
+    <div class="panel">
+      <h3>要做什么</h3>
+      <ul>{% for a in n.action_items %}<li>{{ a }}</li>{% endfor %}</ul>
     </div>
   {% endif %}
 
   {% if attachments %}
-    <div class="att"><strong style="font-size:14px">附件</strong>
-      <ul>{% for a in attachments %}<li><a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.name or '附件' }}</a></li>{% endfor %}</ul>
+    <div class="panel">
+      <h3>附件</h3>
+      <ul>{% for a in attachments %}<li>📎 <a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.name or '附件' }}</a></li>{% endfor %}</ul>
     </div>
   {% endif %}
 
@@ -49,8 +63,16 @@
   {% endif %}
 
   <div class="pn">
-    {% if prev %}<a href="/notice/{{ prev.id }}">← 上一条：{{ prev.title[:28] }}</a>{% else %}<span class="off">← 上一条</span>{% endif %}
-    {% if next %}<a href="/notice/{{ next.id }}" style="margin-left:auto">下一条：{{ next.title[:28] }} →</a>{% else %}<span class="off" style="margin-left:auto">下一条 →</span>{% endif %}
+    {% if prev %}
+      <a href="/notice/{{ prev.id }}"><span class="label">← 上一条</span>{{ prev.title[:30] }}</a>
+    {% else %}
+      <span class="off"><span class="label">← 上一条</span>已经是第一条</span>
+    {% endif %}
+    {% if next %}
+      <a class="next" href="/notice/{{ next.id }}"><span class="label">下一条 →</span>{{ next.title[:30] }}</a>
+    {% else %}
+      <span class="next"><span class="label">下一条 →</span>已经是最后一条</span>
+    {% endif %}
   </div>
 
   {% if related %}
@@ -58,7 +80,7 @@
       <h3>同分类通知</h3>
       <ul>
         {% for r in related %}
-          <li><a href="/notice/{{ r.id }}">{{ r.title[:44] }}</a> <span class="tag">{{ r.published_at or '' }}</span></li>
+          <li><a href="/notice/{{ r.id }}">{{ r.title[:46] }}</a><span class="when">{{ r.published_at or '' }}</span></li>
         {% endfor %}
       </ul>
     </div>
