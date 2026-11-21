@@ -1,5 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
+
+{% if overview %}
+<section class="hero">
+  <div class="hero-title">武汉大学本科生通知聚合</div>
+  <div class="hero-sub">官网 · 学院 · 只收录本科生相关通知，自动去重、抽取截止日期</div>
+  <div class="stats">
+    <div class="stat"><b>{{ overview.today_new }}</b><span>今日新增</span></div>
+    <div class="stat"><b>{{ overview.upcoming }}</b><span>7 天内截止</span></div>
+    <div class="stat"><b>{{ total }}</b><span>累计收录</span></div>
+    {% for s in overview.source_counts %}
+      <div class="stat"><b>{{ s.c }}</b><span>{{ s.name }}</span></div>
+    {% endfor %}
+  </div>
+</section>
+
+{% if overview.important %}
+<section class="important">
+  <div class="sec-title">🔥 重点通知</div>
+  <div class="imp-grid">
+    {% for n in overview.important %}
+      <a class="imp-card" href="/notice/{{ n.id }}">
+        <div class="imp-meta">
+          <span class="badge {% if n.importance >= 70 %}b-hi{% elif n.importance >= 60 %}b-mid{% else %}b-low{% endif %}">{{ n.importance }}</span>
+          <span class="tag">{{ n.category }}</span>
+          <span>{{ n.published_at or '' }}</span>
+        </div>
+        <div class="imp-title">{{ n.title }}</div>
+        {% if n.deadline_date %}<div class="imp-deadline">⏰ 截止 {{ n.deadline_date }}</div>{% endif %}
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="cats">
+  {% for c in overview.category_counts %}
+    <a class="chip" href="?category={{ c.category|urlencode }}">{{ c.category }} <em>{{ c.c }}</em></a>
+  {% endfor %}
+</section>
+{% endif %}
+
 <form class="filters" method="get" action="/">
   <select name="source">
     <option value="">全部来源</option>
@@ -15,12 +56,10 @@
   </select>
   <input type="text" name="q" value="{{ filters.q }}" placeholder="搜索标题或正文…">
   <input type="number" name="min_score" value="{{ filters.min_score }}" placeholder="最低重要度" min="0" max="100" style="width:110px">
-  <label style="font-size:13px;display:flex;align-items:center;gap:4px;">
-    <input type="checkbox" name="deadline" value="1" {% if filters.deadline %}checked{% endif %}> 仅看有截止日期
-  </label>
+  <label class="chk"><input type="checkbox" name="deadline" value="1" {% if filters.deadline %}checked{% endif %}> 仅看有截止日期</label>
   <button type="submit">筛选</button>
   {% if filters.source or filters.category or filters.q or filters.min_score or filters.deadline %}
-    <a href="/" style="font-size:13px;align-self:center;color:var(--muted)">重置</a>
+    <a href="/" class="reset">重置</a>
   {% endif %}
 </form>
 
@@ -38,8 +77,8 @@
       <span class="tag">{{ n.category }}</span>
       <span>{{ n.source_name or n.source_code }}</span>
       <span>{{ n.published_at or n.first_seen_at[:10] }}{% if n.date_inferred %}（推断）{% endif %}</span>
-      {% if n.deadline_date %}<span>⏰ 截止 {{ n.deadline_date }}</span>{% endif %}
-      <a href="{{ n.url }}" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none">原文 ↗</a>
+      {% if n.deadline_date %}<span class="deadline">⏰ 截止 {{ n.deadline_date }}</span>{% endif %}
+      <a href="{{ n.url }}" target="_blank" rel="noopener" class="orig">原文 ↗</a>
     </div>
     {% if n.summary %}<p class="summary">{{ n.summary }}</p>{% endif %}
   </div>

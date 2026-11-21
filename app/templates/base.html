@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}WHU Notice Hub{% endblock %}</title>
+  <title>{% block title %}WHU Notice Hub · 武大本科通知{% endblock %}</title>
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml">
   <style>
-    :root { --fg:#1f2328; --muted:#656d76; --line:#d8dee4; --blue:#0969da; --bg:#f6f8fa; }
+    :root { --fg:#1f2328; --muted:#656d76; --line:#d8dee4; --blue:#0969da; --bg:#f6f8fa; --red:#cf222e; }
     * { box-sizing: border-box; }
     body { margin:0; font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
            color:var(--fg); background:#fff; line-height:1.65; }
@@ -16,13 +17,41 @@
     header .total { color:var(--muted); font-size:13px; }
     header a { color:var(--fg); text-decoration:none; }
     main { padding: 18px 0 60px; }
-    form.filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+
+    .hero { padding: 22px 0 4px; }
+    .hero-title { font-size: 26px; font-weight: 750; letter-spacing:.5px; }
+    .hero-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .stats { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+    .stat { border:1px solid var(--line); border-radius:10px; padding:8px 14px; background:var(--bg); min-width:92px; }
+    .stat b { display:block; font-size:18px; }
+    .stat span { color:var(--muted); font-size:12px; }
+
+    .important { margin-top:24px; }
+    .sec-title { font-size:15px; font-weight:700; margin-bottom:10px; }
+    .imp-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px; }
+    .imp-card { display:block; border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+                text-decoration:none; color:var(--fg); background:#fff; }
+    .imp-card:hover { border-color:var(--blue); }
+    .imp-meta { display:flex; gap:8px; align-items:center; color:var(--muted); font-size:12px; }
+    .imp-title { font-size:14px; font-weight:600; margin-top:6px; line-height:1.5; }
+    .imp-deadline { color:var(--red); font-size:12px; margin-top:6px; }
+
+    .cats { display:flex; flex-wrap:wrap; gap:8px; margin: 20px 0 6px; }
+    .chip { border:1px solid var(--line); border-radius:999px; padding:3px 12px; font-size:12px;
+            color:var(--fg); text-decoration:none; background:#fff; }
+    .chip:hover { border-color:var(--blue); color:var(--blue); }
+    .chip em { font-style:normal; color:var(--muted); }
+
+    form.filters { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0; }
     select, input[type=text], input[type=number] { padding:6px 8px; border:1px solid var(--line);
       border-radius:6px; font-size:13px; background:#fff; }
     input[type=text] { min-width:180px; }
     button { padding:6px 14px; border:1px solid var(--line); border-radius:6px; background:var(--bg);
       cursor:pointer; font-size:13px; }
     button:hover { background:#eef1f4; }
+    .chk { font-size:13px; display:flex; align-items:center; gap:4px; }
+    .reset { font-size:13px; color:var(--muted); align-self:center; }
+
     .item { padding:14px 0; border-bottom:1px solid var(--line); }
     .item h2 { font-size:15px; margin:0 0 4px; line-height:1.5; }
     .item h2 a { color:var(--fg); text-decoration:none; }
@@ -31,6 +60,8 @@
     .tag { display:inline-block; padding:0 6px; border:1px solid var(--line); border-radius:4px; font-size:11px; color:var(--muted); }
     .badge { color:#fff; border-radius:4px; padding:0 6px; font-size:11px; }
     .b-hi { background:#cf222e; } .b-mid { background:#bf8700; } .b-low { background:#57606a; }
+    .deadline { color:var(--red); }
+    .orig { color:var(--blue); text-decoration:none; }
     .summary { color:#3d444d; font-size:13px; margin:6px 0 0; }
     .pager { display:flex; gap:10px; justify-content:center; margin-top:22px; }
     .pager a, .pager span { font-size:13px; color:var(--blue); text-decoration:none; }
@@ -41,6 +72,11 @@
     .article .body { margin-top:18px; white-space:pre-wrap; font-size:15px; }
     .att a { font-size:13px; }
     .actions li { font-size:13px; }
+    @media (max-width: 600px) {
+      .hero-title { font-size:21px; }
+      .stat { flex:1 1 40%; }
+      header .total { display:none; }
+    }
   </style>
 </head>
 <body>
@@ -54,8 +90,8 @@
 {% block content %}{% endblock %}
 </div></main>
 <footer><div class="wrap">
-  数据来自武汉大学各公开网站，仅供个人参考，<strong>一切以官网原文为准</strong>。 ·
-  <a href="/api/notices?limit=20">API</a>
+  数据来自武汉大学各公开网站，仅收录本科生相关通知，仅供个人参考，<strong>一切以官网原文为准</strong>。 ·
+  <a href="/rss.xml">RSS</a> · <a href="/api/notices?limit=20">API</a>
 </div></footer>
 </body>
 </html>
