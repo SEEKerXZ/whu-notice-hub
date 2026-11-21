@@ -86,13 +86,14 @@ def _conn():
 
 def _categories(conn) -> list[dict]:
     return [dict(r) for r in conn.execute(
-        "SELECT category, COUNT(*) AS c FROM notices GROUP BY category ORDER BY c DESC")]
+        """SELECT category, COUNT(*) AS c FROM notices
+            WHERE status <> 'archived' GROUP BY category ORDER BY c DESC""")]
 
 
 def _sources(conn) -> list[dict]:
     return [dict(r) for r in conn.execute(
         """SELECT s.code, s.name, COUNT(n.id) AS c
-             FROM sources s LEFT JOIN notices n ON n.source_code = s.code
+             FROM sources s LEFT JOIN notices n ON n.source_code = s.code AND n.status <> 'archived'
             WHERE s.enabled = 1 GROUP BY s.code ORDER BY s.weight DESC""")]
 
 
@@ -100,11 +101,13 @@ def _overview(conn) -> dict:
     """首页概览：今日新增、7 天内截止、来源分布、分类分布、重点通知。"""
     today = conn.execute(
         """SELECT COUNT(*) c FROM notices
-            WHERE date(COALESCE(published_at, first_seen_at)) = date('now','localtime')"""
+            WHERE status <> 'archived'
+              AND date(COALESCE(published_at, first_seen_at)) = date('now','localtime')"""
     ).fetchone()["c"]
     upcoming = conn.execute(
         """SELECT COUNT(*) c FROM notices
-            WHERE deadline_date BETWEEN date('now','localtime')
+            WHERE status <> 'archived'
+              AND deadline_date BETWEEN date('now','localtime')
                                     AND date('now','localtime','+7 day')"""
     ).fetchone()["c"]
     important = [
@@ -112,7 +115,7 @@ def _overview(conn) -> dict:
             """SELECT n.id, n.title, n.importance, n.category, n.published_at,
                       n.deadline_date, s.name AS source_name
                  FROM notices n LEFT JOIN sources s ON s.code = n.source_code
-                WHERE n.importance >= 55
+                WHERE n.importance >= 55 AND n.status <> 'archived'
                 ORDER BY n.importance DESC, COALESCE(n.published_at, n.first_seen_at) DESC
                 LIMIT 3"""
         )

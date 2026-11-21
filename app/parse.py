@@ -40,6 +40,7 @@ class Detail:
     published_at: str | None = None
     content_text: str = ""
     attachments: list[dict] = field(default_factory=list)
+    restricted: bool = False   # True = 该页返回"暂无权限/404"等错误页，对外不可访问
 
 
 def _extract(node, expr: str) -> str:
@@ -194,13 +195,23 @@ def parse_detail(page_html: str, source: Source, url: str, list_date: str | None
         body = _auto_body(doc)
     detail.content_text = clean_body(text.strip_html(body))
 
-    # 错误页（如"暂无权限"）：不要污染标题和正文，交给调用方回退到列表页字段
-    probe = f"{detail.title} {detail.content_text[:200]}"
-    if any(marker in probe for marker in ERROR_MARKERS) or (
-        not detail.title and len(detail.content_text) < 10
+    # 错误页（如"暂无权限/404"）：不要污染标题和正文，交给调用方按"受限通知"处理。
+    # 注意：错误提示文字可能不在正文块里，必须检查整页文本。
+    full_text = doc.xpath("string(//body)")
+    page_title = _extract(doc, "//title")
+    if (
+        any(marker in full_text for marker in ERROR_MARKERS)
+        or any(marker in page_title for marker in (*ERROR_MARKERS, "系统提示", "404错误提示"))
+        or "系统提示" in detail.title
+        or "可能是由下列问题导致" in full_text
+        or (not detail.title and len(detail.content_text) < 10)
     ):
-        log.info("跳过错误页: %s", url)
-        return Detail()
+        log.info("受限/错误页，跳过: %s", url)
+        detail.restricted = True
+        detail.title = ""
+        detail.content_text = ""
+        detail.attachments = []
+        return detail
 
     # 附件
     att_xpath = source.detail_attachments or DEFAULT_ATTACHMENT_XPATH

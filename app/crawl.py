@@ -72,6 +72,33 @@ def crawl_source(conn: sqlite3.Connection, source: Source, fetcher: Fetcher,
                     log.warning("[%s] 详情失败 %s: %s", source.code, item.url, exc)
 
                 title = parse.choose_title(item.title, detail.title)
+
+                # 受限通知（"暂无权限"）：入库但标记 archived，避免站点展示无法打开的通知，
+                # 同时防止每轮重复抓取该页面。
+                if detail.restricted and not dry_run:
+                    db.save_notice(conn, {
+                        "source_code": source.code,
+                        "url": item.url,
+                        "url_hash": url_hash,
+                        "title": title,
+                        "title_norm": text.normalize_title(title),
+                        "publisher": item.publisher,
+                        "published_at": text.iso(text.parse_date(item.published_at)) if item.published_at else None,
+                        "date_inferred": 0,
+                        "category": "其他",
+                        "summary": None,
+                        "content_md": "",
+                        "content_hash": "restricted",
+                        "audience": [],
+                        "action_items": [],
+                        "deadline_date": None,
+                        "importance": 0,
+                        "status": "archived",
+                    })
+                    result.skipped += 1
+                    known.add(url_hash)
+                    continue
+
                 body = detail.content_text
                 published = detail.published_at or (
                     text.iso(text.parse_date(item.published_at)) if item.published_at else None

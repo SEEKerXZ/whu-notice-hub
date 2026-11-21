@@ -120,13 +120,14 @@ def save_notice(conn: sqlite3.Connection, payload: dict) -> str:
     """插入或更新通知，返回 new / updated / unchanged。"""
     existing = get_notice(conn, payload["url_hash"])
     if existing is None:
+        status = payload.get("status", "new")
         conn.execute(
             """INSERT INTO notices
                  (source_code, url, url_hash, title, title_norm, publisher, published_at,
                   date_inferred, category, summary, content_md, content_hash, audience_json,
                   action_items_json, deadline_date, importance, status,
                   first_seen_at, last_seen_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'new',?,?,?)""",
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 payload["source_code"], payload["url"], payload["url_hash"],
                 payload["title"], payload["title_norm"], payload.get("publisher"),
@@ -136,7 +137,7 @@ def save_notice(conn: sqlite3.Connection, payload: dict) -> str:
                 json.dumps(payload.get("audience", []), ensure_ascii=False),
                 json.dumps(payload.get("action_items", []), ensure_ascii=False),
                 payload.get("deadline_date"),
-                int(payload.get("importance", 50)), now(), now(), now(),
+                int(payload.get("importance", 50)), status, now(), now(), now(),
             ),
         )
         conn.commit()
@@ -202,7 +203,8 @@ def query_notices(conn: sqlite3.Connection, *, source: str | None = None,
                   min_score: int | None = None, has_deadline: bool = False,
                   month: str | None = None,
                   limit: int = 50, offset: int = 0) -> list[sqlite3.Row]:
-    sql = ["SELECT n.*, s.name AS source_name FROM notices n LEFT JOIN sources s ON s.code=n.source_code WHERE 1=1"]
+    sql = ["SELECT n.*, s.name AS source_name FROM notices n LEFT JOIN sources s ON s.code=n.source_code "
+           "WHERE n.status <> 'archived'"]
     args: list = []
     if source:
         sql.append("AND n.source_code=?")
@@ -228,7 +230,8 @@ def query_notices(conn: sqlite3.Connection, *, source: str | None = None,
 
 
 def count_notices(conn: sqlite3.Connection) -> int:
-    return int(conn.execute("SELECT COUNT(*) c FROM notices").fetchone()["c"])
+    return int(conn.execute(
+        "SELECT COUNT(*) c FROM notices WHERE status <> 'archived'").fetchone()["c"])
 
 
 def month_counts(conn: sqlite3.Connection) -> list[sqlite3.Row]:
@@ -237,8 +240,14 @@ def month_counts(conn: sqlite3.Connection) -> list[sqlite3.Row]:
         """SELECT substr(COALESCE(published_at, first_seen_at),1,7) AS month,
                   COUNT(*) AS c
              FROM notices
+            WHERE status <> 'archived'
             GROUP BY month ORDER BY month DESC"""
     ))
+
+
+def archived_count(conn: sqlite3.Connection) -> int:
+    return int(conn.execute(
+        "SELECT COUNT(*) c FROM notices WHERE status = 'archived'").fetchone()["c"])
 
 
 def stats(conn: sqlite3.Connection) -> list[sqlite3.Row]:

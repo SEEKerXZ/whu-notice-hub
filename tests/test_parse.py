@@ -122,6 +122,28 @@ def test_parse_detail_error_page_returns_empty():
     detail = parse.parse_detail(html, _main_source(), "https://www.whu.edu.cn/new2024/tzggnr.jsp?wbnewsid=1")
     assert detail.title == ""
     assert detail.content_text == ""
+    assert detail.restricted is True
+
+
+def test_parse_detail_404_page_is_restricted():
+    html = "<html><head><title>404错误提示</title></head><body>页面不存在</body></html>"
+    detail = parse.parse_detail(html, _main_source(), "https://www.whu.edu.cn/info/1/9.htm")
+    assert detail.restricted is True
+
+
+def test_parse_detail_permission_page_detected_from_full_body():
+    """权限提示文字在 <li> 里、正文块只抽到一句"可能是由下列问题导致的"，也要识别为受限。"""
+    html = """
+    <html><head><title>系统提示</title></head><body>
+      <h1>系统提示</h1>
+      <p>抱歉</p>
+      <p>可能是由下列问题导致的：</p>
+      <ul><li>暂无权限，请咨询管理员。</li></ul>
+    </body></html>
+    """
+    detail = parse.parse_detail(html, _main_source(), "https://cs.whu.edu.cn/content.jsp?wbnewsid=1")
+    assert detail.restricted is True
+    assert detail.content_text == ""
 
 
 INFO_LIST_HTML = """

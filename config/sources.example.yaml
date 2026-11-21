@@ -94,7 +94,57 @@ sources:
       /rczp/szgwzp.htm（招聘）。
 
   # --------------------------------------------------------------------------
-  # 3. 武汉大学信息公开网 · 最新公开（校级，公开栏无需登录）
+  # 3. 计算机学院 · 本科生教育（本科教务/培养相关）
+  # --------------------------------------------------------------------------
+  - code: cs_ug
+    name: 计算机学院·本科生教育
+    level: college
+    enabled: true
+    weight: 85
+    interval_minutes: 60
+    list:
+      url: https://cs.whu.edu.cn/rcpy/bksjy.htm
+      pagination: { mode: none, backfill_pages: 1 }
+      items:
+        xpath: "//li[a[p][span]]"                      # 与通知公告同模板
+        fields:
+          title: "./a/p"
+          url: "./a/@href"
+          published_at: "./a/span"
+    detail:
+      title: "//h2 | //h1"
+      published_at: "//*[contains(text(),'发布时间')]"
+      content: "//div[@id='vsb_content'] | //div[contains(@class,'article-content')]"
+      attachments: "//a[contains(@href,'download.jsp')]"
+      fallback: readability
+
+  # --------------------------------------------------------------------------
+  # 4. 计算机学院 · 共青团（学生活动/评优，本科相关）
+  # --------------------------------------------------------------------------
+  - code: cs_youth
+    name: 计算机学院·共青团
+    level: college
+    enabled: true
+    weight: 75
+    interval_minutes: 60
+    list:
+      url: https://cs.whu.edu.cn/dqgz/gqtgz.htm
+      pagination: { mode: none, backfill_pages: 1 }
+      items:
+        xpath: "//li[a[p][span]]"
+        fields:
+          title: "./a/p"
+          url: "./a/@href"
+          published_at: "./a/span"
+    detail:
+      title: "//h2 | //h1"
+      published_at: "//*[contains(text(),'发布时间')]"
+      content: "//div[@id='vsb_content'] | //div[contains(@class,'article-content')]"
+      attachments: "//a[contains(@href,'download.jsp')]"
+      fallback: readability
+
+  # --------------------------------------------------------------------------
+  # 5. 武汉大学信息公开网 · 最新公开（校级，公开栏无需登录）
   # --------------------------------------------------------------------------
   - code: whu_info_public
     name: 信息公开网·最新公开
