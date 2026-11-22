@@ -197,6 +197,16 @@ def cmd_qq_run(_args) -> int:
     return qq_bot.run()
 
 
+def cmd_ai_test(args) -> int:
+    from . import ai
+
+    if not ai.is_configured():
+        print("LLM_API_KEY 未配置", file=sys.stderr)
+        return 2
+    print(ai.answer(args.question))
+    return 0
+
+
 def cmd_serve(args) -> int:
     import uvicorn
 
@@ -243,6 +253,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("qq-run", help="启动 QQ 官方机器人（WebSocket 长连接）")
 
+    a = sub.add_parser("ai-test", help="用一句话测试 AI 问答")
+    a.add_argument("question", help="例如：最近有什么奖学金通知")
+
     s = sub.add_parser("serve", help="启动 Web 服务")
     s.add_argument("--host", default="0.0.0.0")
     s.add_argument("--port", type=int, default=8000)
@@ -258,6 +271,7 @@ def main(argv: list[str] | None = None) -> int:
         "digest": cmd_digest, "push": cmd_push, "mail-test": cmd_mail_test,
         "wecom-test": cmd_wecom_test,
         "qq-preview": cmd_qq_preview, "qq-run": cmd_qq_run,
+        "ai-test": cmd_ai_test,
     }
     return handlers[args.cmd](args)
 

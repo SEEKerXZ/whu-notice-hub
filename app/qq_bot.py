@@ -7,10 +7,11 @@ QQ 官方平台不允许群机器人主动推送，只能「有人 @ 机器人 /
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 
-from . import db
+from . import ai, db
 
 log = logging.getLogger(__name__)
 
@@ -125,9 +126,16 @@ def run() -> int:
         async def on_group_at_message_create(self, message):
             kind = parse_command(message.content)
             if not kind:
-                await message.reply(
-                    content="发送「日报」查看近两日摘要，发送「重要」查看重点通知。"
-                )
+                # 没有命中固定指令：走 AI 问答（未配置 LLM 时回固定提示）
+                if ai.is_configured():
+                    try:
+                        reply = await asyncio.to_thread(ai.answer, message.content)
+                    except Exception:  # noqa: BLE001
+                        log.exception("AI 回答失败")
+                        reply = "暂时无法回答，发送「日报」查看近期通知。"
+                else:
+                    reply = "发送「日报」查看近期通知，发送「重要」查看重点通知。"
+                await message.reply(content=reply[:1500])
                 return
             try:
                 text = build_text(kind)
