@@ -177,6 +177,17 @@ CREATE TABLE IF NOT EXISTS notice_actions (
 );
 
 -- ---------------------------------------------------------------------------
+-- 10. AI 问答用量（每人/每群/全站每日次数）
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ai_usage (
+    day        TEXT NOT NULL,           -- YYYY-MM-DD
+    scope      TEXT NOT NULL,           -- user:<openid> / group:<openid> / total
+    count      INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT,
+    PRIMARY KEY (day, scope)
+);
+
+-- ---------------------------------------------------------------------------
 -- 9. 全文检索（可选，P1 开启；敏感通知不进入索引）
 -- ---------------------------------------------------------------------------
 -- CREATE VIRTUAL TABLE notices_fts USING fts5(

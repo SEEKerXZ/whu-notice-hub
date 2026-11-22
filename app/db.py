@@ -24,6 +24,15 @@ def connect(db_path: str | Path | None = None) -> sqlite3.Connection:
 
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA_FILE.read_text(encoding="utf-8"))
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS ai_usage (
+               day        TEXT NOT NULL,
+               scope      TEXT NOT NULL,
+               count      INTEGER NOT NULL DEFAULT 0,
+               updated_at TEXT,
+               PRIMARY KEY (day, scope)
+           )"""
+    )
     _migrate(conn)
     conn.commit()
 

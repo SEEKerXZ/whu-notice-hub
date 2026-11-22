@@ -207,6 +207,21 @@ def cmd_ai_test(args) -> int:
     return 0
 
 
+def cmd_ai_quota(_args) -> int:
+    from . import quota
+
+    per_user, per_group, total, interval = quota.limits()
+    print(f"限额配置：每人 {per_user}/天 · 每群 {per_group}/天 · 全站 {total}/天 · 间隔 {interval}s")
+    rows = quota.usage_today()
+    if not rows:
+        print("今天还没有 AI 问答记录。")
+        return 0
+    print(f"\n{'scope':<28}{'count':>6}  updated_at")
+    for r in rows:
+        print(f"{r['scope']:<28}{r['count']:>6}  {r['updated_at'] or ''}")
+    return 0
+
+
 def cmd_serve(args) -> int:
     import uvicorn
 
@@ -256,6 +271,8 @@ def build_parser() -> argparse.ArgumentParser:
     a = sub.add_parser("ai-test", help="用一句话测试 AI 问答")
     a.add_argument("question", help="例如：最近有什么奖学金通知")
 
+    sub.add_parser("ai-quota", help="查看今日 AI 问答用量")
+
     s = sub.add_parser("serve", help="启动 Web 服务")
     s.add_argument("--host", default="0.0.0.0")
     s.add_argument("--port", type=int, default=8000)
@@ -271,7 +288,7 @@ def main(argv: list[str] | None = None) -> int:
         "digest": cmd_digest, "push": cmd_push, "mail-test": cmd_mail_test,
         "wecom-test": cmd_wecom_test,
         "qq-preview": cmd_qq_preview, "qq-run": cmd_qq_run,
-        "ai-test": cmd_ai_test,
+        "ai-test": cmd_ai_test, "ai-quota": cmd_ai_quota,
     }
     return handlers[args.cmd](args)
 
