@@ -12,7 +12,7 @@ import sqlite3
 
 import httpx
 
-from . import db
+from . import db, persona
 
 log = logging.getLogger(__name__)
 
@@ -25,18 +25,25 @@ STOPWORDS = {
 }
 
 SYSTEM_PROMPT = (
-    "你是武汉大学本科生通知助理。只能根据用户提供的「通知列表」回答，绝对不要编造。"
+    "你是「通通」，武汉大学本科生通知群里的猫娘助手。"
+    "只能根据用户提供的「通知列表」回答，绝对不要编造。"
+    "语气元气、亲切，称呼对方「同学」或「你」，不要用「主人」。"
     "回答用中文、简洁（不超过 120 字），优先给出最关键的一两条，并附上链接。"
+    "日期、金额、链接一个字都不能改，口癖只放在句首句尾。"
     "如果列表中找不到相关信息，就直接说没找到，并提示用户可以发送「日报」查看全部近期通知。"
 )
 
 MIXED_PROMPT = (
-    "你是「通通」，武汉大学本科生通知群里的助手，也可以和大家闲聊、答技术问题。\n"
+    "你是「通通」，武汉大学本科生通知群里的猫娘助手，也可以和大家闲聊、答技术问题。\n"
+    "性格：元气、亲切、有点小傲娇，喜欢用「喵」结尾，但不油腻、不黏人；"
+    "称呼对方「同学」或「你」，不要用「主人」。\n"
     "回答规则：\n"
-    "1) 与学校通知相关的问题：只能依据「通知列表」回答，给出来源与链接，不得编造学校政策、日期、金额；\n"
+    "1) 与学校通知相关的问题：只能依据「通知列表」回答，给出来源与链接，日期/金额/政策不得编造或改写；\n"
     "2) 与通知无关的问题（闲聊、代码、课程概念、常识）：直接正常回答，不要说“没找到通知”；\n"
-    "3) 输出要求：中文；普通回答 1~3 句、不超过 100 字；写代码最多 20 行，用纯文本，不要用 ``` 包裹；\n"
-    "4) 不要透露自己是哪个模型。"
+    "3) 输出要求：中文；普通回答 1~3 句、不超过 100 字；"
+    "「喵」每句最多一个、不要连续三句都带；"
+    "写代码最多 20 行，用纯文本、不要用 ``` 包裹，代码里不要加口癖，口癖只放代码外的说明句；\n"
+    "4) 不对问题卖萌敷衍，不确定就说不确定；不要透露自己是哪个模型。"
 )
 
 CHAT_PROMPT = MIXED_PROMPT
@@ -92,8 +99,23 @@ def _bigrams(text: str) -> set[str]:
     return grams
 
 
-def search(conn: sqlite3.Connection, question: str, limit: int = 8) -> list[sqlite3.Row]:
-    """按二元组重合度给通知打分，返回最相关的若干条。"""
+NOTICE_HINTS = (
+    "通知", "奖学金", "助学金", "推免", "保研", "选课", "考试", "缓考", "补考",
+    "截止", "报名", "公示", "讲座", "竞赛", "教务", "复试", "调剂", "学分",
+    "课程", "毕业", "实习", "招聘", "四六级", "转专业", "辅修", "学籍",
+)
+
+
+def is_notice_intent(question: str, scored: list[tuple[int, sqlite3.Row]]) -> bool:
+    """判断是不是在问学校通知：命中关键词，或检索重合度足够高。"""
+    if any(hint in question for hint in NOTICE_HINTS):
+        return True
+    return bool(scored) and scored[0][0] >= 3
+
+
+def search_scored(conn: sqlite3.Connection, question: str,
+                  limit: int = 8) -> list[tuple[int, sqlite3.Row]]:
+    """按二元组重合度给通知打分，返回 (分数, 行)。"""
     grams = _bigrams(question)
     if not grams:
         return []
@@ -111,7 +133,11 @@ def search(conn: sqlite3.Connection, question: str, limit: int = 8) -> list[sqli
         if score > 0:
             scored.append((score, row))
     scored.sort(key=lambda x: (x[0], x[1]["importance"] or 0), reverse=True)
-    return [row for _, row in scored[:limit]]
+    return scored[:limit]
+
+
+def search(conn: sqlite3.Connection, question: str, limit: int = 8) -> list[sqlite3.Row]:
+    return [row for _score, row in search_scored(conn, question, limit)]
 
 
 def _link_of(row: sqlite3.Row) -> str:
@@ -182,32 +208,45 @@ def answer(question: str, limit: int = 1400) -> str:
 
     conn = db.connect()
     try:
-        rows = search(conn, question)
+        scored = search_scored(conn, question)
+        rows = [row for _s, row in scored]
     finally:
         conn.close()
+
+    notice_intent = is_notice_intent(question, scored)
 
     if not is_configured():
         return _fallback(rows) if rows else (
             "没有找到相关通知。\n可以发送「日报」查看近期通知，或换个关键词试试。"
         )
 
+    # 通知类问题：严格依据通知库作答，并加猫娘开场白
+    if notice_intent and rows:
+        try:
+            text = _call_llm(question, _context(rows), general=False)
+            return persona.decorate((text or _fallback(rows))[:limit], mode="notice")
+        except Exception:  # noqa: BLE001
+            log.exception("LLM 调用失败，退化为列表")
+            return persona.decorate(_fallback(rows), mode="notice")
+
+    # 其他问题：闲聊/代码/概念
     if chat_mode():
         try:
             text = _call_llm(question, _context(rows) if rows else "", general=True)
             if text:
-                return text[:limit]
+                return persona.decorate(text[:limit], mode="chat")
         except Exception:  # noqa: BLE001
             log.exception("混合模式调用失败")
 
     if not rows:
         return (
-            "没有找到相关通知。\n"
+            "没有找到相关通知喵。\n"
             "可以发送「日报」查看近期通知，或换个关键词试试（如「奖学金」「推免」「选课」）。"
         )
 
     try:
         text = _call_llm(question, _context(rows), general=False)
-        return text[:limit] if text else _fallback(rows)
+        return persona.decorate((text or _fallback(rows))[:limit], mode="notice")
     except Exception:  # noqa: BLE001
         log.exception("LLM 调用失败，退化为列表")
-        return _fallback(rows)
+        return persona.decorate(_fallback(rows), mode="notice")

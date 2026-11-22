@@ -11,7 +11,7 @@ import asyncio
 import logging
 import os
 
-from . import ai, db, quota
+from . import ai, db, persona, quota
 
 log = logging.getLogger(__name__)
 
@@ -100,8 +100,9 @@ def build_text(kind: str = "daily") -> str:
     if site:
         lines.append("")
         lines.append(f"网页版：{site}")
-    text = "\n".join(lines)
-    return text[:MAX_TEXT]
+    text = "\n".join(lines)[: MAX_TEXT - 80]
+    # L2 猫娘人设：只加开场白与收尾，正文不动
+    return persona.decorate(text, mode="notice")
 
 
 def run() -> int:

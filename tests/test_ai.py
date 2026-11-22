@@ -86,6 +86,47 @@ def test_answer_no_match_chats_when_enabled(conn, monkeypatch):
     assert "在的" in text
 
 
+def test_notice_intent_routing(conn):
+    q1 = "最近有什么奖学金"
+    assert ai.is_notice_intent(q1, ai.search_scored(conn, q1)) is True
+    q2 = "解释一下什么是动态规划"
+    assert ai.is_notice_intent(q2, ai.search_scored(conn, q2)) is False
+
+
+def test_mixed_mode_notice_question_uses_strict_prompt(conn, monkeypatch):
+    """混合模式下，通知类问题仍走严格提示词（带开场白）。"""
+    monkeypatch.setenv("LLM_API_KEY", "sk-test")
+    monkeypatch.setenv("AI_CHAT_MODE", "1")
+
+    class _Resp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"choices": [{"message": {"content": "雷军奖学金 11-30 截止。"}}]}
+
+    class _Client:
+        payload = {}
+
+        def __init__(self, *a, **k):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def post(self, url, headers=None, json=None):
+            _Client.payload = json
+            return _Resp()
+
+    monkeypatch.setattr(ai.httpx, "Client", _Client)
+    text = ai.answer("最近有什么奖学金")
+    assert "只能根据用户提供的" in _Client.payload["messages"][0]["content"]
+    assert "雷军" in text
+
+
 def test_answer_chat_disabled_returns_not_found(conn, monkeypatch):
     monkeypatch.setenv("LLM_API_KEY", "sk-test")
     monkeypatch.setenv("AI_CHAT_MODE", "0")

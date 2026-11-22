@@ -21,6 +21,8 @@ ISOLATED_VARS = (
     "WEB_PASSWORD",
     "DETAIL_ENABLED",
     "AUDIENCE",
+    "PERSONA",
+    "PERSONA_LEVEL",
 )
 
 
