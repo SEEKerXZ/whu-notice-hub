@@ -110,6 +110,24 @@ WECOM_WEBHOOK=https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxx
 20 条/分钟。要「给很多人发」，就让同学加入同一个群；如果真要按人私发，需要用
 企业微信自建应用（要求对方是你企业的成员）。
 
+## QQ 官方机器人（指令式）
+
+QQ 官方平台**不允许群机器人主动推送**，群消息必须被动回复。因此做成指令式：
+
+1. [QQ 开放平台](https://q.qq.com/) 注册开发者（个人需实名）→ 创建机器人，拿到 `AppID` / `AppSecret`
+2. 填入 `.env` 的 `QQ_APPID` / `QQ_APPSECRET`
+3. 用**最新版手机 QQ** 把机器人加进你当群主/管理员的群
+4. `sudo systemctl enable --now whu-qq-bot`
+5. 群里 `@机器人 日报` 或 `@机器人 重要`，它被动回复当天摘要
+
+```bash
+python -m app.cli qq-preview            # 本地预览机器人会回复的文本
+python -m app.cli qq-preview --important
+python -m app.cli qq-run                # 前台启动（调试用）
+```
+
+限制：个人主体机器人不能公开使用、只能加入自己管理的群；被动回复需在触发消息的有效窗口内。
+
 ## 项目结构
 
 ```

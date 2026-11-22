@@ -183,6 +183,20 @@ def cmd_wecom_test(_args) -> int:
     return 0
 
 
+def cmd_qq_preview(args) -> int:
+    from . import qq_bot
+
+    kind = "important" if args.important else "daily"
+    print(qq_bot.build_text(kind))
+    return 0
+
+
+def cmd_qq_run(_args) -> int:
+    from . import qq_bot
+
+    return qq_bot.run()
+
+
 def cmd_serve(args) -> int:
     import uvicorn
 
@@ -224,6 +238,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("wecom-test", help="发送一条企业微信测试消息")
 
+    q = sub.add_parser("qq-preview", help="预览 QQ 机器人会回复的文本")
+    q.add_argument("--important", action="store_true", help="预览「重要」指令的内容")
+
+    sub.add_parser("qq-run", help="启动 QQ 官方机器人（WebSocket 长连接）")
+
     s = sub.add_parser("serve", help="启动 Web 服务")
     s.add_argument("--host", default="0.0.0.0")
     s.add_argument("--port", type=int, default=8000)
@@ -238,6 +257,7 @@ def main(argv: list[str] | None = None) -> int:
         "stats": cmd_stats, "serve": cmd_serve,
         "digest": cmd_digest, "push": cmd_push, "mail-test": cmd_mail_test,
         "wecom-test": cmd_wecom_test,
+        "qq-preview": cmd_qq_preview, "qq-run": cmd_qq_run,
     }
     return handlers[args.cmd](args)
 

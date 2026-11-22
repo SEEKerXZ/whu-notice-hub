@@ -1,0 +1,17 @@
+[Unit]
+Description=WHU Notice Hub QQ Bot (passive reply)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/whu-notice-hub
+EnvironmentFile=/opt/whu-notice-hub/.env
+ExecStart=/opt/whu-notice-hub/.venv/bin/python -m app.cli qq-run
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -2,6 +2,16 @@
 
 CHANGELOG = [
     {
+        "version": "v1.2.0",
+        "date": "2026-11-22",
+        "title": "QQ 官方机器人（指令式）",
+        "items": [
+            "接入 QQ 官方机器人：群里 @机器人 发「日报 / 重要」即被动回复摘要",
+            "支持 WebSocket 长连接，无需公网回调与证书",
+            "新增 systemd 服务 whu-qq-bot 与 CLI 命令 qq-run / qq-preview",
+        ],
+    },
+    {
         "version": "v1.1.0",
         "date": "2026-11-22",
         "title": "企业微信推送",
