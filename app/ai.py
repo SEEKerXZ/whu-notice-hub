@@ -30,6 +30,43 @@ SYSTEM_PROMPT = (
     "如果列表中找不到相关信息，就直接说没找到，并提示用户可以发送「日报」查看全部近期通知。"
 )
 
+CHAT_PROMPT = (
+    "你是「通通」，武汉大学本科生通知群里的助手，偶尔也和大家闲聊。"
+    "性格：友好、简短、有点幽默，不说教。"
+    "要求：中文回复，通常 1~3 句、不超过 80 字；不要长篇大论，不要列清单。"
+    "如果对方问到学校通知、报名、截止日期，就提醒他可以发「日报」或直接问具体事项。"
+    "不要透露你是哪个模型，也不要编造学校政策。"
+)
+
+
+def chat_mode() -> bool:
+    return os.getenv("AI_CHAT_MODE", "0") == "1"
+
+
+def chat(question: str) -> str:
+    """闲聊模式：不检索通知，直接让模型简短回应。"""
+    url = os.getenv("LLM_BASE_URL", DEFAULT_BASE_URL).strip() or DEFAULT_BASE_URL
+    model = os.getenv("LLM_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
+    api_key = os.getenv("LLM_API_KEY", "").strip()
+    payload = {
+        "model": model,
+        "temperature": 0.8,
+        "max_tokens": 200,
+        "messages": [
+            {"role": "system", "content": CHAT_PROMPT},
+            {"role": "user", "content": question[:500]},
+        ],
+    }
+    with httpx.Client(timeout=20) as client:
+        resp = client.post(
+            url,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=payload,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    return (data["choices"][0]["message"]["content"] or "").strip()
+
 
 def is_configured() -> bool:
     return bool(os.getenv("LLM_API_KEY", "").strip())
@@ -138,6 +175,13 @@ def answer(question: str, limit: int = 1400) -> str:
         conn.close()
 
     if not rows:
+        if chat_mode() and is_configured():
+            try:
+                reply = chat(question)
+                if reply:
+                    return reply[:limit]
+            except Exception:  # noqa: BLE001
+                log.exception("闲聊调用失败")
         return (
             "没有找到相关通知。\n"
             "可以发送「日报」查看近期通知，或换个关键词试试（如「奖学金」「推免」「选课」）。"

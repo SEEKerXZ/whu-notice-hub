@@ -57,6 +57,42 @@ def test_answer_no_match(conn):
     assert "没有找到相关通知" in text
 
 
+def test_answer_no_match_chats_when_enabled(conn, monkeypatch):
+    monkeypatch.setenv("LLM_API_KEY", "sk-test")
+    monkeypatch.setenv("AI_CHAT_MODE", "1")
+
+    class _Resp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"choices": [{"message": {"content": "在的在的，今天有什么想了解的？"}}]}
+
+    class _Client:
+        def __init__(self, *a, **k):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def post(self, *a, **k):
+            return _Resp()
+
+    monkeypatch.setattr(ai.httpx, "Client", _Client)
+    text = ai.answer("在吗")
+    assert "在的" in text
+
+
+def test_answer_chat_disabled_returns_not_found(conn, monkeypatch):
+    monkeypatch.setenv("LLM_API_KEY", "sk-test")
+    monkeypatch.setenv("AI_CHAT_MODE", "0")
+    text = ai.answer("在吗")
+    assert "没有找到相关通知" in text
+
+
 def test_answer_without_llm_falls_back(conn, monkeypatch):
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     text = ai.answer("奖学金")
