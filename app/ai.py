@@ -30,13 +30,16 @@ SYSTEM_PROMPT = (
     "如果列表中找不到相关信息，就直接说没找到，并提示用户可以发送「日报」查看全部近期通知。"
 )
 
-CHAT_PROMPT = (
-    "你是「通通」，武汉大学本科生通知群里的助手，偶尔也和大家闲聊。"
-    "性格：友好、简短、有点幽默，不说教。"
-    "要求：中文回复，通常 1~3 句、不超过 80 字；不要长篇大论，不要列清单。"
-    "如果对方问到学校通知、报名、截止日期，就提醒他可以发「日报」或直接问具体事项。"
-    "不要透露你是哪个模型，也不要编造学校政策。"
+MIXED_PROMPT = (
+    "你是「通通」，武汉大学本科生通知群里的助手，也可以和大家闲聊、答技术问题。\n"
+    "回答规则：\n"
+    "1) 与学校通知相关的问题：只能依据「通知列表」回答，给出来源与链接，不得编造学校政策、日期、金额；\n"
+    "2) 与通知无关的问题（闲聊、代码、课程概念、常识）：直接正常回答，不要说“没找到通知”；\n"
+    "3) 输出要求：中文；普通回答 1~3 句、不超过 100 字；写代码最多 20 行，用纯文本，不要用 ``` 包裹；\n"
+    "4) 不要透露自己是哪个模型。"
 )
+
+CHAT_PROMPT = MIXED_PROMPT
 
 
 def chat_mode() -> bool:
@@ -51,7 +54,7 @@ def chat(question: str) -> str:
     payload = {
         "model": model,
         "temperature": 0.8,
-        "max_tokens": 200,
+        "max_tokens": 400,
         "messages": [
             {"role": "system", "content": CHAT_PROMPT},
             {"role": "user", "content": question[:500]},
@@ -138,17 +141,22 @@ def _fallback(rows: list[sqlite3.Row]) -> str:
     return "\n".join(lines)
 
 
-def _call_llm(question: str, context: str) -> str:
+def _call_llm(question: str, context: str, general: bool = False) -> str:
     url = os.getenv("LLM_BASE_URL", DEFAULT_BASE_URL).strip() or DEFAULT_BASE_URL
     model = os.getenv("LLM_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
     api_key = os.getenv("LLM_API_KEY", "").strip()
+    system = MIXED_PROMPT if general else SYSTEM_PROMPT
+    user_content = (
+        f"通知列表：\n{context}\n\n用户问题：{question}"
+        if context else question
+    )
     payload = {
         "model": model,
-        "temperature": 0.2,
-        "max_tokens": 400,
+        "temperature": 0.4 if general else 0.2,
+        "max_tokens": 600 if general else 400,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"通知列表：\n{context}\n\n用户问题：{question}"},
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_content},
         ],
     }
     with httpx.Client(timeout=25) as client:
@@ -163,7 +171,11 @@ def _call_llm(question: str, context: str) -> str:
 
 
 def answer(question: str, limit: int = 1400) -> str:
-    """返回给 QQ 群的回答文本。检索不到或调用失败时退化为列表。"""
+    """返回给 QQ 群的回答文本。
+
+    闲聊模式开启时走「混合模式」：通知相关问题严格依据通知列表，其他问题正常回答；
+    关闭时保持严格模式：只答通知，答不了就说没找到。
+    """
     question = (question or "").strip()
     if not question:
         return "发送「日报」查看近期通知，发送「重要」查看重点通知。"
@@ -174,24 +186,27 @@ def answer(question: str, limit: int = 1400) -> str:
     finally:
         conn.close()
 
+    if not is_configured():
+        return _fallback(rows) if rows else (
+            "没有找到相关通知。\n可以发送「日报」查看近期通知，或换个关键词试试。"
+        )
+
+    if chat_mode():
+        try:
+            text = _call_llm(question, _context(rows) if rows else "", general=True)
+            if text:
+                return text[:limit]
+        except Exception:  # noqa: BLE001
+            log.exception("混合模式调用失败")
+
     if not rows:
-        if chat_mode() and is_configured():
-            try:
-                reply = chat(question)
-                if reply:
-                    return reply[:limit]
-            except Exception:  # noqa: BLE001
-                log.exception("闲聊调用失败")
         return (
             "没有找到相关通知。\n"
             "可以发送「日报」查看近期通知，或换个关键词试试（如「奖学金」「推免」「选课」）。"
         )
 
-    if not is_configured():
-        return _fallback(rows)
-
     try:
-        text = _call_llm(question, _context(rows))
+        text = _call_llm(question, _context(rows), general=False)
         return text[:limit] if text else _fallback(rows)
     except Exception:  # noqa: BLE001
         log.exception("LLM 调用失败，退化为列表")
