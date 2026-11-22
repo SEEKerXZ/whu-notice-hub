@@ -9,7 +9,7 @@ import sqlite3
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from . import db, mailer
+from . import db, im, mailer
 
 log = logging.getLogger(__name__)
 
@@ -93,6 +93,54 @@ def default_subscription(conn: sqlite3.Connection) -> int:
 # --------------------------------------------------------------------------
 # 即时推送
 # --------------------------------------------------------------------------
+def _link_of(row: sqlite3.Row) -> str:
+    """受限/验证码详情页回退到公开列表页。"""
+    url = row["url"] or ""
+    if ("content.jsp" in url or "tzggnr.jsp" in url) and row["fallback_url"]:
+        return row["fallback_url"]
+    return url
+
+
+def build_markdown(title: str, sections: list[tuple[str, list[sqlite3.Row]]]) -> str:
+    """企业微信 markdown 消息（也适用于飞书/钉钉的思路）。"""
+    total = sum(len(rows) for _, rows in sections)
+    lines = [f"## {title}", f"> 共 {total} 条", ""]
+    for heading, rows in sections:
+        if not rows:
+            continue
+        lines.append(f"**{heading}**")
+        for row in rows:
+            meta = [row["source_name"] or row["source_code"]]
+            if row["published_at"]:
+                meta.append(row["published_at"])
+            extra = f" · ⏰ 截止 {row['deadline_date']}" if row["deadline_date"] else ""
+            lines.append(f"- [{row['title']}]({_link_of(row)})")
+            lines.append(f'  <font color="comment">{" · ".join(meta)}{extra}</font>')
+        lines.append("")
+    site = os.getenv("SITE_URL", "").strip()
+    if site:
+        lines.append(f"[打开网页版]({site})")
+    return "\n".join(lines)
+
+
+def _deliver(title: str, html_body: str, sections: list[tuple[str, list[sqlite3.Row]]]) -> bool:
+    """按已配置的渠道发送：邮件 + 企业微信群机器人。返回是否至少成功一个。"""
+    sent = False
+    if mailer.is_configured():
+        try:
+            mailer.send_email(title, html_body)
+            sent = True
+        except Exception:  # noqa: BLE001
+            log.exception("邮件发送失败")
+    if im.is_configured():
+        try:
+            im.send_markdown(build_markdown(title, sections))
+            sent = True
+        except Exception:  # noqa: BLE001
+            log.exception("企业微信推送失败")
+    return sent
+
+
 def push_high_importance(conn: sqlite3.Connection, dry_run: bool = False) -> int:
     """把未推送过的高重要度通知合成一封邮件发出。"""
     sub_id = default_subscription(conn)
@@ -113,17 +161,20 @@ def push_high_importance(conn: sqlite3.Connection, dry_run: bool = False) -> int
         return 0
 
     title = f"【武大通知】{len(rows)} 条重要通知"
-    html_body = build_html(title, [("需要关注", rows)])
+    sections = [("需要关注", rows)]
+    html_body = build_html(title, sections)
 
     if dry_run:
         log.info("dry-run 待推送 %s 条", len(rows))
         return len(rows)
 
-    if not mailer.is_configured():
-        log.warning("SMTP 未配置，跳过推送（%s 条待推送）", len(rows))
+    if not mailer.is_configured() and not im.is_configured():
+        log.warning("邮件与企业微信都未配置，跳过推送（%s 条待推送）", len(rows))
         return 0
 
-    mailer.send_email(title, html_body)
+    if not _deliver(title, html_body, sections):
+        return 0
+
     for row in rows:
         conn.execute(
             """INSERT OR IGNORE INTO deliveries (notice_id, subscription_id, channel, kind, status, sent_at)
@@ -174,11 +225,19 @@ def send_digest(conn: sqlite3.Connection, force: bool = False, dry_run: bool = F
     if dry_run:
         print(html_body)
         return True
-    if not mailer.is_configured():
-        log.warning("SMTP 未配置，日报未发送")
+    if not mailer.is_configured() and not im.is_configured():
+        log.warning("邮件与企业微信都未配置，日报未发送")
         return False
 
-    mailer.send_email(title, html_body)
+    sections = [("过去 24 小时新增", _rows(conn, """
+        SELECT n.*, s.name AS source_name
+          FROM notices n LEFT JOIN sources s ON s.code = n.source_code
+         WHERE coalesce(n.published_at, n.first_seen_at) >= ?
+         ORDER BY n.importance DESC, n.published_at DESC LIMIT 30
+    """, ((datetime.now() - timedelta(hours=24)).strftime("%Y-%m-%d %H:%M:%S"),)))]
+    if not _deliver(title, html_body, sections):
+        return False
+
     marker.parent.mkdir(parents=True, exist_ok=True)
     marker.write_text(today)
     log.info("日报已发送")

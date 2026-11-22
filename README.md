@@ -1,4 +1,4 @@
-﻿# WHU Notice Hub · 武大通知聚合
+# WHU Notice Hub · 武大通知聚合
 
 把武汉大学官网、学院等公开栏目里分散的通知公告，聚合成一个**不漏、降噪、可执行**的入口：自动抓取 → 去重 → 抽取截止日期与适用对象 → 按重要度排序 → 网页/邮件查看。
 
@@ -93,6 +93,22 @@ python -m app.cli push --dry-run    # 查看待推送的高重要度通知
 | `DIGEST_HOUR` / `DIGEST_MINUTE` | 日报发送时间（默认 08:30） |
 | `SNAPSHOT_KEEP_DAYS` | 原始 HTML 快照保留天数（默认 7） |
 | `WEB_USER` / `WEB_PASSWORD` | 可选，开启网页 HTTP Basic 认证 |
+| `WECOM_WEBHOOK` | 企业微信群机器人地址；配置后日报/即时推送同时发到群里 |
+
+## 企业微信推送
+
+在**企业微信群**里：`群设置 → 群机器人 → 添加`，复制 Webhook 地址填到 `.env`：
+
+```bash
+WECOM_WEBHOOK=https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxx
+```
+
+然后 `python -m app.cli wecom-test` 发一条测试消息；之后每天 08:30 的日报、
+以及高重要度即时提醒都会以 markdown 卡片推到群里。
+
+注意：群机器人**只能发到它所在的群**，不能私聊、不能发给外部联系人；单机器人限制
+20 条/分钟。要「给很多人发」，就让同学加入同一个群；如果真要按人私发，需要用
+企业微信自建应用（要求对方是你企业的成员）。
 
 ## 项目结构
 

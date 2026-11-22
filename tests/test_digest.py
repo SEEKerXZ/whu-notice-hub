@@ -43,8 +43,19 @@ def test_push_dry_run_counts_only_high(conn, monkeypatch):
 def test_push_skips_when_smtp_missing(conn, monkeypatch):
     monkeypatch.setenv("PUSH_MIN_IMPORTANCE", "50")
     monkeypatch.delenv("SMTP_PASSWORD", raising=False)
+    monkeypatch.delenv("WECOM_WEBHOOK", raising=False)
     _add(conn, "高优通知", 90, "https://x/3")
     assert digest.push_high_importance(conn) == 0
+
+
+def test_build_markdown_for_wecom(conn):
+    _add(conn, "奖学金评选通知", 80, "https://x/9", "2099-01-01")
+    rows = list(conn.execute("SELECT n.*, s.name AS source_name FROM notices n "
+                             "LEFT JOIN sources s ON s.code=n.source_code"))
+    text = digest.build_markdown("武大通知日报", [("过去 24 小时新增", rows)])
+    assert text.startswith("## 武大通知日报")
+    assert "奖学金评选通知" in text
+    assert "https://x/9" in text
 
 
 def test_build_digest_html(conn):

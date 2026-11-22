@@ -12,4 +12,5 @@ def test_all_subcommands_parse():
     assert parser.parse_args(["push", "--dry-run"]).dry_run is True
     assert parser.parse_args(["digest", "--force"]).force is True
     assert parser.parse_args(["mail-test"]).cmd == "mail-test"
+    assert parser.parse_args(["wecom-test"]).cmd == "wecom-test"
     assert parser.parse_args(["serve", "--port", "9000"]).port == 9000

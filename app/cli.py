@@ -168,6 +168,21 @@ def cmd_mail_test(_args) -> int:
     return 0
 
 
+def cmd_wecom_test(_args) -> int:
+    from . import im
+
+    if not im.is_configured():
+        print("WECOM_WEBHOOK 未配置：请在 .env 填入企业微信群机器人 Webhook 地址", file=sys.stderr)
+        return 2
+    im.send_markdown(
+        "## 武大通知聚合 · 测试消息\n"
+        "> 企业微信群机器人配置成功 ✅\n"
+        "> 每日 08:30 会自动推送日报到这里"
+    )
+    print("测试消息已发送到企业微信群")
+    return 0
+
+
 def cmd_serve(args) -> int:
     import uvicorn
 
@@ -207,6 +222,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("mail-test", help="发送一封测试邮件")
 
+    sub.add_parser("wecom-test", help="发送一条企业微信测试消息")
+
     s = sub.add_parser("serve", help="启动 Web 服务")
     s.add_argument("--host", default="0.0.0.0")
     s.add_argument("--port", type=int, default=8000)
@@ -220,6 +237,7 @@ def main(argv: list[str] | None = None) -> int:
         "init-db": cmd_init_db, "crawl": cmd_crawl, "list": cmd_list,
         "stats": cmd_stats, "serve": cmd_serve,
         "digest": cmd_digest, "push": cmd_push, "mail-test": cmd_mail_test,
+        "wecom-test": cmd_wecom_test,
     }
     return handlers[args.cmd](args)
 
