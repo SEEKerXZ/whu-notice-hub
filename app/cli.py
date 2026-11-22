@@ -222,6 +222,16 @@ def cmd_ai_quota(_args) -> int:
     return 0
 
 
+def cmd_intro_test(args) -> int:
+    from . import intro
+
+    if not intro.matches(args.text):
+        print("未命中介绍触发词")
+        return 1
+    print(intro.build_reply())
+    return 0
+
+
 def cmd_serve(args) -> int:
     import uvicorn
 
@@ -273,6 +283,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("ai-quota", help="查看今日 AI 问答用量")
 
+    it = sub.add_parser("intro-test", help="测试人物介绍彩蛋")
+    it.add_argument("text", help="例如：介绍下胡豪宇")
+
     s = sub.add_parser("serve", help="启动 Web 服务")
     s.add_argument("--host", default="0.0.0.0")
     s.add_argument("--port", type=int, default=8000)
@@ -289,6 +302,7 @@ def main(argv: list[str] | None = None) -> int:
         "wecom-test": cmd_wecom_test,
         "qq-preview": cmd_qq_preview, "qq-run": cmd_qq_run,
         "ai-test": cmd_ai_test, "ai-quota": cmd_ai_quota,
+        "intro-test": cmd_intro_test,
     }
     return handlers[args.cmd](args)
 

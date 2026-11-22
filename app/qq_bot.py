@@ -11,7 +11,7 @@ import asyncio
 import logging
 import os
 
-from . import ai, db, persona, quota
+from . import ai, db, intro, persona, quota
 
 log = logging.getLogger(__name__)
 
@@ -125,6 +125,11 @@ def run() -> int:
             log.info("QQ 机器人已上线：%s", self.robot.name if getattr(self, "robot", None) else "")
 
         async def on_group_at_message_create(self, message):
+            # 彩蛋：问「胡豪宇/老大/bjhh…」时回复固定简介（不消耗 AI 额度）
+            if intro.matches(message.content):
+                await message.reply(content=intro.build_reply()[:1500])
+                return
+
             kind = parse_command(message.content)
             if not kind:
                 # 没有命中固定指令：先查额度，再走 AI 问答
