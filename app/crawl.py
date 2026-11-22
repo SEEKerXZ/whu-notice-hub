@@ -118,6 +118,13 @@ def crawl_source(conn: sqlite3.Connection, source: Source, fetcher: Fetcher,
                 if os.getenv("DETAIL_ENABLED", "0") != "1":
                     title = item.title
                     category = text.guess_category(title, "")
+                    # 列表页模式下也要做本科生过滤（只看标题）
+                    if os.getenv("AUDIENCE", "").lower() == "undergrad" and not score.is_undergraduate_relevant(
+                        title, "", category
+                    ):
+                        result.skipped += 1
+                        known.add(url_hash)
+                        continue
                     state = db.save_notice(conn, {
                         "source_code": source.code,
                         "url": item.url,

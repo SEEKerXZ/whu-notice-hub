@@ -67,13 +67,13 @@ def build_text(kind: str = "daily") -> str:
             ).fetchall()
             title = "【武大通知】重要通知"
         else:
-            # 「日报」= 站内近期最值得看的若干条（按重要度 + 时间排序）
+            # 「日报」= 站内最新的若干条（按发布时间倒序）
             rows = conn.execute(
                 """SELECT n.*, s.name AS source_name
                      FROM notices n LEFT JOIN sources s ON s.code = n.source_code
                     WHERE n.status <> 'archived'
-                    ORDER BY n.importance DESC,
-                             COALESCE(n.published_at, n.first_seen_at) DESC
+                    ORDER BY COALESCE(n.published_at, n.first_seen_at) DESC,
+                             n.importance DESC
                     LIMIT ?""",
                 (DAILY_LIMIT,),
             ).fetchall()
