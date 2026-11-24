@@ -17,7 +17,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config  # noqa: F401  加载 .env
-from . import db
+from . import db, portal
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -236,6 +236,64 @@ def _list_response(request: Request, *, page_title: str, base_path: str,
 # 页面路由
 # ---------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
+def portal_home(request: Request):
+    """首页门户：视频推荐 / 通知 / 项目分享 / 便捷工具。"""
+    conn = _conn()
+    try:
+        total = db.count_notices(conn)
+        overview = _overview(conn)
+    finally:
+        conn.close()
+    data = portal.load()
+    return templates.TemplateResponse(request, "portal.html", {
+        "total": total,
+        "overview": overview,
+        "videos": data["videos"],
+        "projects": data["projects"],
+        "tools": data["tools"],
+    })
+
+
+@app.get("/videos", response_class=HTMLResponse)
+def videos_page(request: Request):
+    data = portal.load()
+    conn = _conn()
+    try:
+        total = db.count_notices(conn)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "videos.html", {
+        "videos": data["videos"], "total": total,
+    })
+
+
+@app.get("/projects", response_class=HTMLResponse)
+def projects_page(request: Request):
+    data = portal.load()
+    conn = _conn()
+    try:
+        total = db.count_notices(conn)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "projects.html", {
+        "projects": data["projects"], "total": total,
+    })
+
+
+@app.get("/tools", response_class=HTMLResponse)
+def tools_page(request: Request):
+    data = portal.load()
+    conn = _conn()
+    try:
+        total = db.count_notices(conn)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "tools.html", {
+        "tools": data["tools"], "total": total,
+    })
+
+
+@app.get("/notices", response_class=HTMLResponse)
 def index(request: Request, source: str | None = None, category: str | None = None,
           q: str | None = None, level: str | None = None, min_score: int | None = None,
           deadline: int = 0, page: int = 1, size: int = 30):
@@ -244,7 +302,7 @@ def index(request: Request, source: str | None = None, category: str | None = No
         title = f"搜索：{q}"
     min_score = LEVEL_TO_MIN_SCORE.get((level or "").lower(), min_score)
     return _list_response(
-        request, page_title=title, base_path="/",
+        request, page_title=title, base_path="/notices",
         source=source, category=category, q=q, min_score=min_score,
         deadline=deadline, page=page, size=size, level=level,
         show_overview=not any([source, category, q, min_score, deadline]),
@@ -253,7 +311,7 @@ def index(request: Request, source: str | None = None, category: str | None = No
 
 @app.get("/search", response_class=HTMLResponse)
 def search(request: Request, q: str = ""):
-    return RedirectResponse(f"/?q={quote(q)}", status_code=307)
+    return RedirectResponse(f"/notices?q={quote(q)}", status_code=307)
 
 
 @app.get("/category/{category}", response_class=HTMLResponse)

@@ -54,8 +54,24 @@ def client(tmp_path, monkeypatch):
     return TestClient(app)
 
 
-def test_index_renders(client):
+def test_portal_home(client):
     resp = client.get("/")
+    assert resp.status_code == 200
+    assert "今天想看点什么" in resp.text
+    for name in ("通知聚合", "视频推荐", "项目分享", "便捷工具"):
+        assert name in resp.text
+
+
+def test_portal_subpages(client):
+    assert client.get("/videos").status_code == 200
+    assert client.get("/projects").status_code == 200
+    tools = client.get("/tools")
+    assert tools.status_code == 200
+    assert "便捷工具" in tools.text
+
+
+def test_index_renders(client):
+    resp = client.get("/notices")
     assert resp.status_code == 200
     assert "WHU Notice Hub" in resp.text
     assert "今日新增" in resp.text
@@ -63,14 +79,13 @@ def test_index_renders(client):
 
 
 def test_index_filter(client):
-    assert client.get("/?category=教务").status_code == 200
-    assert client.get("/?q=选课").status_code == 200
-    assert "仅看有截止日期" in client.get("/").text
+    assert client.get("/notices?category=教务").status_code == 200
+    assert client.get("/notices?q=选课").status_code == 200
+    assert "仅看有截止日期" in client.get("/notices").text
 
 
 def test_importance_levels_not_numbers(client):
-    html = client.get("/").text
-    # 页面上只出现"重要/一般/参考"这类文字等级，不再显示具体分数
+    html = client.get("/notices").text
     assert "level" in html
     assert "重要" in html
     assert 'type="number"' not in html
@@ -78,7 +93,7 @@ def test_importance_levels_not_numbers(client):
 
 def test_level_filter(client):
     for level in ("high", "mid", "low"):
-        assert client.get(f"/?level={level}").status_code == 200
+        assert client.get(f"/notices?level={level}").status_code == 200
 
 
 def test_category_page(client):

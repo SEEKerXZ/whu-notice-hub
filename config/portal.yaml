@@ -1,0 +1,41 @@
+# 首页四个板块的内容配置（改这里即可更新，无需改代码）
+# 视频推荐：title / url / desc / tag
+videos:
+  - title: 武汉大学公开课（B站搜索）
+    url: https://search.bilibili.com/all?keyword=%E6%AD%A6%E6%B1%89%E5%A4%A7%E5%AD%A6%20%E5%85%AC%E5%BC%80%E8%AF%BE
+    desc: 学校公开课、通识讲座合集，按需自取
+    tag: 公开课
+  - title: 计算机学院讲座与活动
+    url: https://search.bilibili.com/all?keyword=%E6%AD%A6%E6%B1%89%E5%A4%A7%E5%AD%A6%20%E8%AE%A1%E7%AE%97%E6%9C%BA%20%E8%AE%B2%E5%BA%A7
+    desc: 学院讲座、技术分享相关视频
+    tag: 讲座
+  - title: 编程学习路线（示例）
+    url: https://www.bilibili.com/
+    desc: 待补充：换成你认为值得推荐的 UP 主或播放列表
+    tag: 学习
+
+# 项目分享：name / url / desc / author
+projects:
+  - name: WHU Notice Hub
+    url: https://github.com/SEEKerXZ/whu-notice-hub
+    desc: 本站自身：武大本科生通知聚合 + QQ 机器人
+    author: SEEKers
+  - name: 待添加你的项目
+    url: https://github.com/
+    desc: 在 config/portal.yaml 里补充同学的项目链接
+    author: 同学
+
+# 便捷工具：name / url / desc / tag
+tools:
+  - name: 通知时间线
+    url: /notices
+    desc: 本科通知聚合，支持筛选与搜索
+    tag: 本站
+  - name: 通知 RSS
+    url: /rss.xml
+    desc: 用阅读器订阅最新通知
+    tag: 本站
+  - name: 通知 API
+    url: /api/notices?limit=20
+    desc: JSON 接口，方便二次开发
+    tag: 开发

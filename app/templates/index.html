@@ -49,7 +49,7 @@
   </div>
 </section>
 {% else %}
-<div class="crumbs"><a href="/">首页</a><span>/</span><span>{{ page_title }}</span></div>
+<div class="crumbs"><a href="/">首页</a><span>/</span><a href="/notices">通知</a><span>/</span><span>{{ page_title }}</span></div>
 <div class="page-head"><h1>{{ page_title }}</h1></div>
 {% endif %}
 
@@ -76,7 +76,7 @@
   <label class="chk"><input type="checkbox" name="deadline" value="1" {% if filters.deadline %}checked{% endif %}> 仅看有截止日期</label>
   <button class="btn" type="submit">筛选</button>
   {% if filters.source or filters.category or filters.q or filters.level or filters.deadline %}
-    <a class="btn ghost" href="/">重置</a>
+    <a class="btn ghost" href="/notices">重置</a>
   {% endif %}
 </form>
 

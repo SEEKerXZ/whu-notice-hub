@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="crumbs"><a href="/">首页</a><span>/</span><span>便捷工具</span></div>
+<div class="page-head"><h1>便捷工具</h1><span class="count">{{ tools|length }} 个</span></div>
+
+<div class="card-grid">
+  {% for t in tools %}
+    <a class="scard" href="{{ t.url }}" {% if not t.url.startswith('/') %}target="_blank" rel="noopener"{% endif %}>
+      <div class="t">🛠 {{ t.name }}</div>
+      <div class="d">{{ t.desc or '' }}</div>
+      <div class="m">
+        {% if t.tag %}<span class="tag">{{ t.tag }}</span>{% endif %}
+        <span>打开 →</span>
+      </div>
+    </a>
+  {% endfor %}
+</div>
+
+{% if not tools %}
+  <div class="empty">还没有工具，编辑 config/portal.yaml 的 tools 即可添加。</div>
+{% endif %}
+{% endblock %}

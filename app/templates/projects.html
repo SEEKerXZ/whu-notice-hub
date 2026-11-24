@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="crumbs"><a href="/">首页</a><span>/</span><span>项目分享</span></div>
+<div class="page-head"><h1>项目分享</h1><span class="count">{{ projects|length }} 个</span></div>
+
+<div class="card-grid">
+  {% for p in projects %}
+    <a class="scard" href="{{ p.url }}" target="_blank" rel="noopener">
+      <div class="t">🧩 {{ p.name }}</div>
+      <div class="d">{{ p.desc or '' }}</div>
+      <div class="m">
+        {% if p.author %}<span class="tag">{{ p.author }}</span>{% endif %}
+        <span>查看 ↗</span>
+      </div>
+    </a>
+  {% endfor %}
+</div>
+
+{% if not projects %}
+  <div class="empty">还没有内容，编辑 config/portal.yaml 的 projects 即可添加。</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-eyebrow">WHU Notice Hub</div>
+  <div class="hero-title">今天想看点什么？</div>
+  <div class="hero-sub">通知、视频、项目、工具，四个入口按需进</div>
+</section>
+
+<div class="portal-grid">
+  <a class="pcard c1" href="/notices">
+    <div class="ico">📢</div>
+    <h3>通知聚合</h3>
+    <p>官网 · 学院 · 信息公开网，只收本科生相关通知，自动去重、分档</p>
+    <span class="n">{{ total }} 条 →</span>
+  </a>
+  <a class="pcard c2" href="/videos">
+    <div class="ico">🎬</div>
+    <h3>视频推荐</h3>
+    <p>公开课、讲座、技术分享，值得一看的内容整理</p>
+    <span class="n">{{ videos|length }} 个 →</span>
+  </a>
+  <a class="pcard c3" href="/projects">
+    <div class="ico">🧩</div>
+    <h3>项目分享</h3>
+    <p>同学做的项目与作品，欢迎投稿你的仓库</p>
+    <span class="n">{{ projects|length }} 个 →</span>
+  </a>
+  <a class="pcard c4" href="/tools">
+    <div class="ico">🛠</div>
+    <h3>便捷工具</h3>
+    <p>通知检索、RSS、API，以及后续要加的排版/日历工具</p>
+    <span class="n">{{ tools|length }} 个 →</span>
+  </a>
+</div>
+
+{% if overview and overview.important %}
+<section class="section">
+  <div class="sec-head">
+    <h2>🔔 最新重点通知</h2>
+    <span class="hint"><a href="/notices">查看全部 →</a></span>
+  </div>
+  <div class="mini-list">
+    {% for n in overview.important %}
+      <div class="mini">
+        <span class="level {{ n.importance|level_class }}">{{ n.importance|level_label }}</span>
+        <a href="/notice/{{ n.id }}">{{ n.title }}</a>
+        <span class="d">{{ n.published_at or '' }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="section">
+  <div class="sec-head"><h2>📊 站点概况</h2></div>
+  <div class="stats">
+    <a class="stat" href="/notices?deadline=1"><b>{{ overview.upcoming }}</b><span>7 天内截止</span></a>
+    <a class="stat" href="/notices"><b>{{ overview.today_new }}</b><span>今日新增</span></a>
+    <a class="stat" href="/notices"><b>{{ total }}</b><span>累计通知</span></a>
+    {% for s in overview.source_counts[:3] %}
+      <a class="stat" href="/source/{{ s.code }}"><b>{{ s.c }}</b><span>{{ s.name }}</span></a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

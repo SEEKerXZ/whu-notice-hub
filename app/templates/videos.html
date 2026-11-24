@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="crumbs"><a href="/">首页</a><span>/</span><span>视频推荐</span></div>
+<div class="page-head"><h1>视频推荐</h1><span class="count">{{ videos|length }} 个</span></div>
+
+<div class="card-grid">
+  {% for v in videos %}
+    <a class="scard" href="{{ v.url }}" target="_blank" rel="noopener">
+      <div class="t">🎬 {{ v.title }}</div>
+      <div class="d">{{ v.desc or '' }}</div>
+      <div class="m">
+        {% if v.tag %}<span class="tag">{{ v.tag }}</span>{% endif %}
+        <span>打开 ↗</span>
+      </div>
+    </a>
+  {% endfor %}
+</div>
+
+{% if not videos %}
+  <div class="empty">还没有内容，编辑 config/portal.yaml 的 videos 即可添加。</div>
+{% endif %}
+{% endblock %}
