@@ -1,18 +1,26 @@
 # 首页四个板块的内容配置（改这里即可更新，无需改代码）
 # 视频推荐：title / url / desc / tag
 videos:
-  - title: 武汉大学公开课（B站搜索）
-    url: https://search.bilibili.com/all?keyword=%E6%AD%A6%E6%B1%89%E5%A4%A7%E5%AD%A6%20%E5%85%AC%E5%BC%80%E8%AF%BE
-    desc: 学校公开课、通识讲座合集，按需自取
-    tag: 公开课
-  - title: 计算机学院讲座与活动
-    url: https://search.bilibili.com/all?keyword=%E6%AD%A6%E6%B1%89%E5%A4%A7%E5%AD%A6%20%E8%AE%A1%E7%AE%97%E6%9C%BA%20%E8%AE%B2%E5%BA%A7
-    desc: 学院讲座、技术分享相关视频
-    tag: 讲座
-  - title: 编程学习路线（示例）
-    url: https://www.bilibili.com/
-    desc: 待补充：换成你认为值得推荐的 UP 主或播放列表
-    tag: 学习
+  - title: 《高等数学》同济版 2024 年更新（宋浩）
+    url: https://www.bilibili.com/video/BV1Eb411u7Fw
+    desc: 195 讲完整课程，配合同济版教材使用，期末复习/考研基础都适用
+    tag: 高数
+  - title: 《高等数学》全程教学视频 2.0 版（宋浩）
+    url: https://www.bilibili.com/video/BV1CAxaeHEeH
+    desc: 2.0 版本，讲解更细致，适合零基础入门
+    tag: 高数
+  - title: 《线性代数》教学视频 3.0 版（宋浩）
+    url: https://www.bilibili.com/video/BV1d7wAzsE8V
+    desc: 线性代数 3.0 版，覆盖向量、方程组、特征值等全部章节
+    tag: 线代
+  - title: 《线性代数》教学视频 2024 年更新（宋浩）
+    url: https://www.bilibili.com/video/BV1aW411Q7x1
+    desc: 2024 更新版，配宋浩线性代数讲义观看
+    tag: 线代
+  - title: 宋浩老师官方 B 站空间
+    url: https://space.bilibili.com/66607740
+    desc: 高数、线代、概率论等全部课程与讲义更新都在这里
+    tag: 合集
 
 # 项目分享：name / url / desc / author
 projects:
