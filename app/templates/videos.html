@@ -1,29 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="page-hero pink">
-  <div class="ph-row">
-    <div class="ph-ico">🎬</div>
-    <div>
-      <div class="ph-eyebrow">Videos</div>
-      <h1>视频推荐</h1>
-    </div>
-  </div>
-  <div class="ph-sub">公开课、系统课、讲座与技术分享。先从高数线代开始，后面会继续补。</div>
-  <div class="ph-stats">
-    <span class="ph-stat"><b>{{ videos|length }}</b><span>个推荐</span></span>
-    <a class="ph-stat" href="/notices"><b>去通知</b><span>看看有什么新消息</span></a>
-  </div>
-</section>
+<div class="page-top">
+  <div class="kicker">Videos · 视频推荐</div>
+  <h1>视频推荐</h1>
+  <p>公开课、系统课、讲座与技术分享，共 {{ videos|length }} 个。先从高数线代开始，后面继续补。</p>
+</div>
 
 <div class="tiles">
   {% for v in videos %}
     <a class="tile" href="{{ v.url }}" target="_blank" rel="noopener">
-      <div class="thumb t2" style="font-size:30px">▶</div>
-      <div class="tbody">
+      <div class="thumb t2">▶</div>
+      <div class="tb">
         <div class="tt">{{ v.title }}</div>
         <div class="td">{{ v.desc or '' }}</div>
         <div class="tm">
-          {% if v.tag %}<span class="tag {{ v.tag|tag_class }}">{{ v.tag }}</span>{% endif %}
+          {% if v.tag %}<span class="tag">{{ v.tag }}</span>{% endif %}
           <span class="go">打开 ↗</span>
         </div>
       </div>

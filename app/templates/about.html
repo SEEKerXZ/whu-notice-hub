@@ -1,76 +1,59 @@
 {% extends "base.html" %}
 {% block title %}关于 · WHU Notice Hub{% endblock %}
 {% block content %}
-<section class="page-hero">
-  <div class="ph-row">
-    <div class="ph-ico">ℹ️</div>
-    <div>
-      <div class="ph-eyebrow">About · v1.5.0</div>
-      <h1>关于这个站点</h1>
-    </div>
+<div class="page-top">
+  <div class="kicker">About · 关于</div>
+  <h1>关于这个站点</h1>
+  <p>把分散的武大通知收进一个页面：官网、信息公开网、计算机学院等多个站点，过滤掉与本科生无关的内容，按重要度分档展示。</p>
+</div>
+
+<div class="author">
+  <div class="av">S</div>
+  <div>
+    <div class="nm">SEEKers</div>
+    <div class="ds">武汉大学在校本科生 · 独立开发与维护</div>
   </div>
-  <div class="ph-sub">把分散的武大通知收进一个页面：官网、信息公开网、计算机学院等多个站点，过滤掉与本科生无关的内容，按重要度分档展示。</div>
-</section>
+  <div class="lk">
+    <a href="https://github.com/SEEKerXZ/whu-notice-hub" target="_blank" rel="noopener">GitHub ↗</a>
+    <a href="mailto:githubseeker@163.com">联系</a>
+  </div>
+</div>
 
 <div class="prose">
   <p>
-    WHU Notice Hub 是一个面向<strong>武汉大学本科生</strong>的非官方通知聚合站。
+    WHU Notice Hub 是一个面向<strong>武汉大学本科生</strong>的非官方信息站。
     官网、信息公开网、计算机学院等多个站点每天发布大量通知，真正和自己有关的那几条，往往会淹没在公示、会议通知和讲座预告里。
-    这个站点做的事情很简单：<strong>定时抓取这些公开栏目 → 过滤掉与本科生无关的内容 → 按重要度分档展示 → 一键跳到原文</strong>。
+    这个站点做的事情很简单：<strong>定时抓取公开栏目 → 过滤掉与本科生无关的内容 → 按重要度分档展示 → 一键跳到原文</strong>。
   </p>
   <p>
     只做<strong>标题 + 概览 + 原文链接</strong>：不转载正文与附件，既能快速浏览，也避免版权与个人信息问题。
     需要细节时点开原文即可，一切以官网为准。
   </p>
-  <h2>制作人</h2>
-  <div class="panel" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-    <div style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
-                background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;font-weight:800;font-size:16px">S</div>
-    <div style="flex:1;min-width:200px">
-      <div style="font-size:15px;font-weight:700">SEEKers</div>
-      <div style="font-size:12.5px;color:var(--muted)">
-        武汉大学在校本科生 · 独立开发与维护
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <a class="btn ghost" href="https://github.com/SEEKerXZ/whu-notice-hub" target="_blank" rel="noopener">GitHub 仓库 ↗</a>
-      <a class="btn ghost" href="mailto:githubseeker@163.com">联系我</a>
-    </div>
-  </div>
 
   <h2>信息来自哪些网站</h2>
   <p>目前接入 6 个公开栏目，均为各站点对外公开的通知列表页：</p>
-  <table class="src">
+  <table>
     <tr><th>站点 / 栏目</th><th>入口</th><th>条数</th><th></th></tr>
     {% for s in sources %}
       <tr>
         <td>{{ s.name }}</td>
         <td>
-          {% if s.code == 'whu_main' %}
-            <a href="https://www.whu.edu.cn/tzgg.htm" target="_blank" rel="noopener">whu.edu.cn/tzgg</a>
-          {% elif s.code == 'whu_info_public' %}
-            <a href="https://info.whu.edu.cn/gz/zxgk.htm" target="_blank" rel="noopener">info.whu.edu.cn</a>
-          {% elif s.code == 'cs_whu' %}
-            <a href="https://cs.whu.edu.cn/xwdt/tzgg.htm" target="_blank" rel="noopener">cs.whu.edu.cn/xwdt/tzgg</a>
-          {% elif s.code == 'cs_ug' %}
-            <a href="https://cs.whu.edu.cn/rcpy/bksjy.htm" target="_blank" rel="noopener">cs.whu.edu.cn/rcpy/bksjy</a>
-          {% elif s.code == 'cs_youth' %}
-            <a href="https://cs.whu.edu.cn/dqgz/gqtgz.htm" target="_blank" rel="noopener">cs.whu.edu.cn/dqgz/gqtgz</a>
-          {% elif s.code == 'cs_party' %}
-            <a href="https://cs.whu.edu.cn/dqgz/djgz.htm" target="_blank" rel="noopener">cs.whu.edu.cn/dqgz/djgz</a>
-          {% else %}
-            <span style="color:var(--muted)">—</span>
-          {% endif %}
+          {% if s.code == 'whu_main' %}<a href="https://www.whu.edu.cn/tzgg.htm" target="_blank" rel="noopener">whu.edu.cn/tzgg</a>
+          {% elif s.code == 'whu_info_public' %}<a href="https://info.whu.edu.cn/gz/zxgk.htm" target="_blank" rel="noopener">info.whu.edu.cn</a>
+          {% elif s.code == 'cs_whu' %}<a href="https://cs.whu.edu.cn/xwdt/tzgg.htm" target="_blank" rel="noopener">cs.whu.edu.cn/xwdt/tzgg</a>
+          {% elif s.code == 'cs_ug' %}<a href="https://cs.whu.edu.cn/rcpy/bksjy.htm" target="_blank" rel="noopener">cs.whu.edu.cn/rcpy/bksjy</a>
+          {% elif s.code == 'cs_youth' %}<a href="https://cs.whu.edu.cn/dqgz/gqtgz.htm" target="_blank" rel="noopener">cs.whu.edu.cn/dqgz/gqtgz</a>
+          {% elif s.code == 'cs_party' %}<a href="https://cs.whu.edu.cn/dqgz/djgz.htm" target="_blank" rel="noopener">cs.whu.edu.cn/dqgz/djgz</a>
+          {% else %}<span style="color:var(--muted)">—</span>{% endif %}
         </td>
         <td>{{ s.c }}</td>
         <td><a href="/source/{{ s.code }}">浏览 →</a></td>
       </tr>
     {% endfor %}
   </table>
-  <p style="color:var(--muted);font-size:12.5px">
+  <p style="font-size:12.5px;color:var(--muted)">
     当前共收录 {{ total }} 条通知，每 60 分钟自动更新一次。
-    部分栏目（如信息公开网的学生/教工通知、学院公示详情页）需要校内权限或会触发验证码，
-    这类内容只收录标题并标注「仅校内」，不会展示无法打开的页面。
+    部分栏目（如信息公开网学生/教工通知、学院公示详情页）需校内权限或会触发验证码，这类内容只收录标题并标注「仅校内」。
   </p>
 
   <h2>站点做了什么</h2>
@@ -95,7 +78,7 @@
     所有内容版权归原发布单位所有，<strong>信息以官网原文为准</strong>；
     重要事项（报名、缴费、材料提交等）请务必到原文页面核实。
   </p>
-  <p style="color:var(--muted);font-size:12.5px">
+  <p style="font-size:12.5px;color:var(--muted)">
     更新记录见 <a href="/changelog">更新日志</a>；如需反馈或申请访问，可发邮件至
     <a href="mailto:githubseeker@163.com">githubseeker@163.com</a>。
   </p>

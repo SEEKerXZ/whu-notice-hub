@@ -1,60 +1,69 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section class="hero">
-  <div class="hero-eyebrow">WHU Notice Hub</div>
-  <div class="hero-title">今天想看点什么？</div>
-  <div class="hero-sub">通知、视频、项目、工具，四个入口按需进</div>
-  <div class="stats">
-    <a class="stat" href="/notices"><b>{{ total }}</b><span>累计通知</span></a>
-    <a class="stat" href="/notices?deadline=1"><b>{{ overview.upcoming }}</b><span>7 天内截止</span></a>
-    <a class="stat" href="/notices"><b>{{ overview.today_new }}</b><span>今日新增</span></a>
+<section class="hero-ed">
+  <div>
+    <div class="kicker">WHU Notice Hub · 本科生信息站</div>
+    <h1>今天想看<em>点什么</em>？</h1>
+    <p class="lede">通知、视频、项目、工具——四个入口按需进。所有通知只保留标题与概览，正文一律跳原文。</p>
+    <form class="search" method="get" action="/notices">
+      <input type="text" name="q" placeholder="搜索通知，如「奖学金」「推免」…">
+      <button type="submit">搜索</button>
+    </form>
+    <div class="date-line">今日新增 {{ overview.today_new }} 条 · 7 天内截止 {{ overview.upcoming }} 条 · 共 {{ total }} 条</div>
+  </div>
+  <aside class="hero-side">
+    <div class="label">本期速览</div>
+    <dl>
+      <dt>累计通知</dt><dd>{{ total }}</dd>
+      <dt>今日新增</dt><dd>{{ overview.today_new }}</dd>
+      <dt>7 天内截止</dt><dd><a href="/notices?deadline=1">{{ overview.upcoming }}</a></dd>
+      <dt>视频推荐</dt><dd>{{ videos|length }}</dd>
+      <dt>项目分享</dt><dd>{{ projects|length }}</dd>
+      <dt>便捷工具</dt><dd>{{ tools|length }}</dd>
+    </dl>
+  </aside>
+</section>
+
+<section class="sec">
+  <div class="sec-head"><h2>目录</h2><span class="more">四个板块</span></div>
+  <div class="chapters">
+    <a class="chapter" href="/notices">
+      <span class="num">01</span>
+      <span class="icon">📢</span>
+      <span class="name">通知聚合</span>
+      <span class="desc">官网 · 学院 · 信息公开网，只收本科生相关，自动去重分档</span>
+      <span class="count">{{ total }} 条 →</span>
+    </a>
+    <a class="chapter" href="/videos">
+      <span class="num">02</span>
+      <span class="icon">🎬</span>
+      <span class="name">视频推荐</span>
+      <span class="desc">公开课、讲座、技术分享，值得一看的整理</span>
+      <span class="count">{{ videos|length }} 个 →</span>
+    </a>
+    <a class="chapter" href="/projects">
+      <span class="num">03</span>
+      <span class="icon">🧩</span>
+      <span class="name">项目分享</span>
+      <span class="desc">同学的项目与作品，欢迎投稿你的仓库</span>
+      <span class="count">{{ projects|length }} 个 →</span>
+    </a>
+    <a class="chapter" href="/tools">
+      <span class="num">04</span>
+      <span class="icon">🛠</span>
+      <span class="name">便捷工具</span>
+      <span class="desc">通知检索、RSS、API，以及后续要加的排版工具</span>
+      <span class="count">{{ tools|length }} 个 →</span>
+    </a>
   </div>
 </section>
 
-<section class="section">
-  <div class="sec-head"><h2>开始探索</h2><span class="hint">四个板块</span></div>
-  <div class="tiles">
-    <a class="tile" href="/notices">
-      <div class="thumb t1" style="background:linear-gradient(135deg,#5b8def,#2563eb)">📢</div>
-      <div class="tbody">
-        <div class="tt">通知聚合</div>
-        <div class="td">官网 · 学院 · 信息公开网，只收本科生相关通知，自动去重、分档</div>
-        <div class="tm"><span class="tag t-blue">通知</span><span class="go">{{ total }} 条 →</span></div>
-      </div>
-    </a>
-    <a class="tile" href="/videos">
-      <div class="thumb t2">🎬</div>
-      <div class="tbody">
-        <div class="tt">视频推荐</div>
-        <div class="td">公开课、讲座、技术分享，值得一看的内容整理</div>
-        <div class="tm"><span class="tag t-pink">视频</span><span class="go">{{ videos|length }} 个 →</span></div>
-      </div>
-    </a>
-    <a class="tile" href="/projects">
-      <div class="thumb t5">🧩</div>
-      <div class="tbody">
-        <div class="tt">项目分享</div>
-        <div class="td">同学做的项目与作品，欢迎投稿你的仓库</div>
-        <div class="tm"><span class="tag t-violet">项目</span><span class="go">{{ projects|length }} 个 →</span></div>
-      </div>
-    </a>
-    <a class="tile" href="/tools">
-      <div class="thumb t3">🛠</div>
-      <div class="tbody">
-        <div class="tt">便捷工具</div>
-        <div class="td">通知检索、RSS、API，以及后续要加的排版/日历工具</div>
-        <div class="tm"><span class="tag t-green">工具</span><span class="go">{{ tools|length }} 个 →</span></div>
-      </div>
-    </a>
-  </div>
-</section>
-
-{% if overview and overview.important %}
-<section class="section">
+{% if overview.important %}
+<section class="sec">
   <div class="sec-head">
-    <h2>🔔 最新重点通知</h2>
-    <span class="hint"><a href="/notices">查看全部 →</a></span>
+    <h2>重点通知</h2>
+    <span class="more"><a href="/notices">查看全部 →</a></span>
   </div>
   <div class="mini-list">
     {% for n in overview.important %}
@@ -63,6 +72,35 @@
         <a href="/notice/{{ n.id }}">{{ n.title }}</a>
         <span class="d">{{ n.published_at or '' }}</span>
       </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if latest %}
+<section class="sec">
+  <div class="sec-head">
+    <h2>最新收录</h2>
+    <span class="more"><a href="/notices">更多 →</a></span>
+  </div>
+  <div class="stream">
+    {% for n in latest %}
+      <article class="entry">
+        <div class="date">
+          <b>{{ (n.published_at or n.first_seen_at)[8:10] }}</b>
+          <span>{{ (n.published_at or n.first_seen_at)[5:7] }} 月</span>
+        </div>
+        <div class="body">
+          <h3><a href="/notice/{{ n.id }}">{{ n.title }}</a></h3>
+          <div class="meta">
+            <span class="level {{ n.importance|level_class }}">{{ n.importance|level_label }}</span>
+            <span class="tag">{{ n.category }}</span>
+            <span class="sep">·</span>
+            <span>{{ n.source_name or n.source_code }}</span>
+            <a class="origin" href="{{ n.url }}" target="_blank" rel="noopener" style="margin-left:auto">原文 ↗</a>
+          </div>
+        </div>
+      </article>
     {% endfor %}
   </div>
 </section>

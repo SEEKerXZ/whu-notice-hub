@@ -2,123 +2,131 @@
 {% block content %}
 
 {% if overview %}
-<section class="hero">
-  <div class="hero-eyebrow">Undergraduate Notices</div>
-  <div class="hero-title">武汉大学本科生通知聚合</div>
-  <div class="hero-sub">官网 · 学院 · 信息公开网　｜　自动去重、识别受众、抽取截止日期</div>
-  <div class="stats">
-    <a class="stat" href="/archive"><b>{{ overview.today_new }}</b><span>今日新增</span></a>
-    <a class="stat" href="/?deadline=1"><b>{{ overview.upcoming }}</b><span>7 天内截止</span></a>
-    <a class="stat" href="/archive"><b>{{ total }}</b><span>累计收录</span></a>
-    {% for s in overview.source_counts %}
-      <a class="stat" href="/source/{{ s.code|urlencode }}"><b>{{ s.c }}</b><span>{{ s.name }}</span></a>
-    {% endfor %}
+<section class="hero-ed">
+  <div>
+    <div class="kicker">Notifications · 本科生通知</div>
+    <h1>只留你<em>关心的</em>那些</h1>
+    <p class="lede">官网、信息公开网、计算机学院六个栏目，自动过滤研究生/教师类内容，按重要度分档，点开即达原文。</p>
+    <div class="date-line">今日新增 {{ overview.today_new }} 条 · 7 天内截止 {{ overview.upcoming }} 条 · 共 {{ total }} 条</div>
   </div>
+  <aside class="hero-side">
+    <div class="label">分布</div>
+    <dl>
+      {% for s in overview.source_counts %}
+        <dt>{{ s.name }}</dt><dd><a href="/source/{{ s.code }}">{{ s.c }}</a></dd>
+      {% endfor %}
+    </dl>
+  </aside>
 </section>
 
 {% if overview.important %}
-<section class="section">
-  <div class="sec-head"><h2>🔥 重点通知</h2><span class="hint">按重要度排序</span></div>
-  <div class="imp-grid">
+<section class="sec">
+  <div class="sec-head"><h2>重点通知</h2><span class="more">按重要度</span></div>
+  <div class="mini-list">
     {% for n in overview.important %}
-      <a class="imp-card {% if n.importance >= 70 %}lv3{% elif n.importance >= 60 %}lv2{% else %}lv1{% endif %}" href="/notice/{{ n.id }}">
-        <div class="imp-meta">
-          <span class="level {{ n.importance|level_class }}">{{ n.importance|level_label }}</span>
-          <span class="tag {{ n.category|cat_class }}"><span class="dot"></span>{{ n.category }}</span>
-          <span>{{ n.published_at or '' }}</span>
-        </div>
-        <div class="imp-title">{{ n.title }}</div>
-        {% if n.deadline_date %}
-          {% set d = n.deadline_date|days_left %}
-          <div class="imp-deadline">⏰ 截止 {{ n.deadline_date }}{% if d is not none and d >= 0 %} · 剩 {{ d }} 天{% endif %}</div>
-        {% endif %}
-      </a>
+      <div class="mini">
+        <span class="level {{ n.importance|level_class }}">{{ n.importance|level_label }}</span>
+        <a href="/notice/{{ n.id }}">{{ n.title }}</a>
+        <span class="d">{{ n.published_at or '' }}</span>
+      </div>
     {% endfor %}
   </div>
 </section>
 {% endif %}
-
-<section class="section">
-  <div class="sec-head"><h2>按分类浏览</h2><span class="hint">点击进入分类页</span></div>
-  <div class="chips">
-    {% for c in overview.category_counts %}
-      <a class="chip {{ c.category|cat_class }}" href="/category/{{ c.category|urlencode }}">
-        <span class="dot"></span>{{ c.category }} <em>{{ c.c }}</em>
-      </a>
-    {% endfor %}
-  </div>
-</section>
 {% else %}
-<div class="crumbs"><a href="/">首页</a><span>/</span><a href="/notices">通知</a><span>/</span><span>{{ page_title }}</span></div>
-<div class="page-head"><h1>{{ page_title }}</h1></div>
-{% endif %}
-
-<form class="filters" method="get" action="{{ base_path }}">
-  <select name="source">
-    <option value="">全部来源</option>
-    {% for s in sources %}
-      <option value="{{ s.code }}" {% if filters.source == s.code %}selected{% endif %}>{{ s.name }}</option>
-    {% endfor %}
-  </select>
-  <select name="category">
-    <option value="">全部分类</option>
-    {% for c in categories %}
-      <option value="{{ c.category }}" {% if filters.category == c.category %}selected{% endif %}>{{ c.category }}（{{ c.c }}）</option>
-    {% endfor %}
-  </select>
-  <input type="text" name="q" value="{{ filters.q }}" placeholder="搜索标题或正文…">
-  <select name="level">
-    <option value="">全部重要度</option>
-    <option value="high" {% if filters.level == 'high' %}selected{% endif %}>仅看重要</option>
-    <option value="mid" {% if filters.level == 'mid' %}selected{% endif %}>一般及以上</option>
-    <option value="low" {% if filters.level == 'low' %}selected{% endif %}>全部（含参考）</option>
-  </select>
-  <label class="chk"><input type="checkbox" name="deadline" value="1" {% if filters.deadline %}checked{% endif %}> 仅看有截止日期</label>
-  <button class="btn" type="submit">筛选</button>
-  {% if filters.source or filters.category or filters.q or filters.level or filters.deadline %}
-    <a class="btn ghost" href="/notices">重置</a>
-  {% endif %}
-</form>
-
-{% if not items %}
-  <div class="empty">没有符合条件的通知</div>
-{% endif %}
-
-<div class="list">
-{% for n in items %}
-  <article class="item">
-    <h2 class="item-title"><a href="/notice/{{ n.id }}">{{ n.title }}</a></h2>
-    <div class="meta">
-      <span class="level {{ n.importance|level_class }}">{{ n.importance|level_label }}</span>
-      <a class="tag {{ n.category|cat_class }}" href="/category/{{ n.category|urlencode }}"><span class="dot"></span>{{ n.category }}</a>
-      {% if n.restricted %}<span class="tag locked">🔒 仅校内</span>{% endif %}
-      <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a>
-      <span class="sep">·</span>
-      <span>{{ n.published_at or n.first_seen_at[:10] }}{% if n.date_inferred %}（推断）{% endif %}</span>
-      {% if n.deadline_date %}
-        {% set d = n.deadline_date|days_left %}
-        <span class="due {% if d is not none and 0 <= d <= 3 %}soon{% endif %}">
-          ⏰ {{ n.deadline_date }}{% if d is not none %}{% if d < 0 %}（已过期）{% elif d == 0 %}（今天）{% else %}（剩 {{ d }} 天）{% endif %}{% endif %}
-        </span>
-      {% endif %}
-      {% if n.restricted or 'content.jsp' in n.url or 'tzggnr.jsp' in n.url %}
-        {% if n.fallback_url %}<a href="{{ n.fallback_url }}" target="_blank" rel="noopener">列表页 ↗</a>{% endif %}
-      {% else %}
-        <a href="{{ n.url }}" target="_blank" rel="noopener">原文 ↗</a>
-      {% endif %}
-    </div>
-    {% if n.summary %}<p class="summary">{{ n.summary }}</p>{% endif %}
-  </article>
-{% endfor %}
+<div class="page-top">
+  <div class="kicker"><a href="/notices">通知</a> · 筛选结果</div>
+  <h1>{{ page_title }}</h1>
+  <p>{{ items|length }} 条结果</p>
 </div>
+{% endif %}
 
-<div class="pager">
-  {% if page > 1 %}
-    <a href="{{ base_path }}?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'level': filters.level, 'deadline': filters.deadline, 'page': page-1}|urlencode }}">← 上一页</a>
-  {% else %}<span class="off">← 上一页</span>{% endif %}
-  <span class="pos">第 {{ page }} 页</span>
-  {% if has_next %}
-    <a href="{{ base_path }}?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'level': filters.level, 'deadline': filters.deadline, 'page': page+1}|urlencode }}">下一页 →</a>
-  {% else %}<span class="off">下一页 →</span>{% endif %}
+<div class="layout">
+  <aside class="filters">
+    <form method="get" action="{{ base_path }}">
+      <div class="fg">
+        <label>来源</label>
+        <select name="source">
+          <option value="">全部来源</option>
+          {% for s in sources %}
+            <option value="{{ s.code }}" {% if filters.source == s.code %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="fg">
+        <label>分类</label>
+        <select name="category">
+          <option value="">全部分类</option>
+          {% for c in categories %}
+            <option value="{{ c.category }}" {% if filters.category == c.category %}selected{% endif %}>{{ c.category }}（{{ c.c }}）</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="fg">
+        <label>重要度</label>
+        <select name="level">
+          <option value="">全部</option>
+          <option value="high" {% if filters.level == 'high' %}selected{% endif %}>仅看重要</option>
+          <option value="mid" {% if filters.level == 'mid' %}selected{% endif %}>一般及以上</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>关键词</label>
+        <input type="text" name="q" value="{{ filters.q }}" placeholder="标题或正文…">
+      </div>
+      <div class="fg">
+        <label class="chk"><input type="checkbox" name="deadline" value="1" {% if filters.deadline %}checked{% endif %}> 仅看有截止日期</label>
+      </div>
+      <button class="btn" type="submit">筛选</button>
+      {% if filters.source or filters.category or filters.q or filters.level or filters.deadline %}
+        <a class="reset" href="/notices">重置</a>
+      {% endif %}
+    </form>
+  </aside>
+
+  <div>
+    {% if not items %}
+      <div class="empty">没有符合条件的通知</div>
+    {% endif %}
+    <div class="stream">
+      {% for n in items %}
+        <article class="entry">
+          <div class="date">
+            <b>{{ (n.published_at or n.first_seen_at)[8:10] }}</b>
+            <span>{{ (n.published_at or n.first_seen_at)[5:7] }} 月</span>
+          </div>
+          <div class="body">
+            <h3><a href="/notice/{{ n.id }}">{{ n.title }}</a></h3>
+            <div class="meta">
+              <span class="level {{ n.importance|level_class }}">{{ n.importance|level_label }}</span>
+              <a class="tag" href="/category/{{ n.category|urlencode }}">{{ n.category }}</a>
+              {% if n.restricted %}<span class="tag locked">仅校内</span>{% endif %}
+              <span class="sep">·</span>
+              <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a>
+              {% if n.deadline_date %}
+                {% set d = n.deadline_date|days_left %}
+                <span class="due">⏰ {{ n.deadline_date }}{% if d is not none %}{% if d < 0 %}· 已过期{% elif d == 0 %}· 今天{% else %}· 剩 {{ d }} 天{% endif %}{% endif %}</span>
+              {% endif %}
+              {% if n.restricted or 'content.jsp' in n.url or 'tzggnr.jsp' in n.url %}
+                {% if n.fallback_url %}<a class="origin" href="{{ n.fallback_url }}" target="_blank" rel="noopener" style="margin-left:auto">列表页 ↗</a>{% endif %}
+              {% else %}
+                <a class="origin" href="{{ n.url }}" target="_blank" rel="noopener" style="margin-left:auto">原文 ↗</a>
+              {% endif %}
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    <div class="pager">
+      {% if page > 1 %}
+        <a href="{{ base_path }}?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'level': filters.level, 'deadline': filters.deadline, 'page': page-1}|urlencode }}">← 上一页</a>
+      {% else %}<span class="off">← 上一页</span>{% endif %}
+      <span class="pos">第 {{ page }} 页</span>
+      {% if has_next %}
+        <a href="{{ base_path }}?{{ {'source': filters.source, 'category': filters.category, 'q': filters.q, 'level': filters.level, 'deadline': filters.deadline, 'page': page+1}|urlencode }}">下一页 →</a>
+      {% else %}<span class="off">下一页 →</span>{% endif %}
+    </div>
+  </div>
 </div>
 {% endblock %}

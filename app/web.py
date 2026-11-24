@@ -254,12 +254,14 @@ def portal_home(request: Request):
     try:
         total = db.count_notices(conn)
         overview = _overview(conn)
+        latest = [dict(r) for r in db.query_notices(conn, limit=5)]
     finally:
         conn.close()
     data = portal.load()
     return templates.TemplateResponse(request, "portal.html", {
         "total": total,
         "overview": overview,
+        "latest": latest,
         "videos": data["videos"],
         "projects": data["projects"],
         "tools": data["tools"],

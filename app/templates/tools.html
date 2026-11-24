@@ -1,28 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="page-hero green">
-  <div class="ph-row">
-    <div class="ph-ico">🛠</div>
-    <div>
-      <div class="ph-eyebrow">Tools</div>
-      <h1>便捷工具</h1>
-    </div>
-  </div>
-  <div class="ph-sub">通知检索、订阅、接口，以及后续要加的 LaTeX/Typst 排版、校历等工具。</div>
-  <div class="ph-stats">
-    <span class="ph-stat"><b>{{ tools|length }}</b><span>个工具</span></span>
-  </div>
-</section>
+<div class="page-top">
+  <div class="kicker">Tools · 便捷工具</div>
+  <h1>便捷工具</h1>
+  <p>通知检索、订阅、接口，以及后续要加的 LaTeX/Typst 排版、校历等工具，共 {{ tools|length }} 个。</p>
+</div>
 
 <div class="tiles">
   {% for t in tools %}
     <a class="tile" href="{{ t.url }}" {% if not t.url.startswith('/') %}target="_blank" rel="noopener"{% endif %}>
-      <div class="thumb t3" style="font-size:30px">⚙</div>
-      <div class="tbody">
+      <div class="thumb t3">⚙</div>
+      <div class="tb">
         <div class="tt">{{ t.name }}</div>
         <div class="td">{{ t.desc or '' }}</div>
         <div class="tm">
-          {% if t.tag %}<span class="tag {{ t.tag|tag_class }}">{{ t.tag }}</span>{% endif %}
+          {% if t.tag %}<span class="tag">{{ t.tag }}</span>{% endif %}
           <span class="go">打开 →</span>
         </div>
       </div>

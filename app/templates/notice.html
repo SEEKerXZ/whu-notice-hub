@@ -3,15 +3,15 @@
 {% block content %}
 <div class="crumbs">
   <a href="/">首页</a><span>/</span>
+  <a href="/notices">通知</a><span>/</span>
   <a href="/category/{{ n.category|urlencode }}">{{ n.category }}</a><span>/</span>
-  <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a><span>/</span>
-  <span>概览</span>
+  <span>正文</span>
 </div>
 
-<article class="article">
-  <div class="detail-meta">
+<article class="sheet">
+  <div class="top">
     <span class="level {{ n.importance|level_class }}">{{ n.importance|level_label }}</span>
-    <a class="tag {{ n.category|cat_class }}" href="/category/{{ n.category|urlencode }}"><span class="dot"></span>{{ n.category }}</a>
+    <a class="tag" href="/category/{{ n.category|urlencode }}">{{ n.category }}</a>
     {% if n.restricted %}<span class="tag locked">🔒 仅校内可见</span>{% endif %}
     <a href="/source/{{ n.source_code|urlencode }}">{{ n.source_name or n.source_code }}</a>
     <span>·</span>
@@ -20,56 +20,57 @@
     {% if n.date_inferred %}<span class="tag">日期推断</span>{% endif %}
     {% if n.deadline_date %}
       {% set d = n.deadline_date|days_left %}
-      <span class="due {% if d is not none and 0 <= d <= 3 %}soon{% endif %}">⏰ 截止 {{ n.deadline_date }}{% if d is not none %}{% if d < 0 %}（已过期）{% else %}（剩 {{ d }} 天）{% endif %}{% endif %}</span>
+      <span class="due">⏰ 截止 {{ n.deadline_date }}{% if d is not none %}{% if d < 0 %}· 已过期{% else %}· 剩 {{ d }} 天{% endif %}{% endif %}</span>
     {% endif %}
   </div>
 
-  <h1 class="title">{{ n.title }}</h1>
+  <h1>{{ n.title }}</h1>
 
-  {% if n.summary %}<p class="callout">{{ n.summary }}</p>{% endif %}
+  {% if n.summary %}<p class="lede-quote">{{ n.summary }}</p>{% endif %}
 
-  <div class="panel">
-    <h3>概览</h3>
-    <p style="margin:0;font-size:13.5px;color:var(--fg-2)">
-      本站只收录通知的标题与基本信息，不转载正文。完整内容、附件与表格请通过下方链接查看原文。
+  <div class="acts">
+    {% if n.restricted or 'content.jsp' in n.url or 'tzggnr.jsp' in n.url %}
+      {% if n.fallback_url %}<a class="btn" href="{{ n.fallback_url }}" target="_blank" rel="noopener">前往列表页 ↗</a>{% endif %}
+    {% else %}
+      <a class="btn" href="{{ n.url }}" target="_blank" rel="noopener">查看原文 ↗</a>
+    {% endif %}
+    <a class="btn ghost" href="/notices">返回通知列表</a>
+  </div>
+
+  <div class="rule"></div>
+
+  <div class="fieldset">
+    <h3>说明</h3>
+    <p style="font-size:13.5px;color:var(--muted);margin:0">
+      本站只收录通知的标题与基本信息，不转载正文与附件{% if 'content.jsp' in n.url or 'tzggnr.jsp' in n.url %}；该详情页校外访问需验证，建议连接校园网后查看{% endif %}。
+      完整内容、报名链接与附件请前往原文页面。
     </p>
-    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-      {% if n.restricted or 'content.jsp' in n.url or 'tzggnr.jsp' in n.url %}
-        {% if n.fallback_url %}<a class="btn" href="{{ n.fallback_url }}" target="_blank" rel="noopener">前往列表页查看 ↗</a>{% endif %}
-      {% else %}
-        <a class="btn" href="{{ n.url }}" target="_blank" rel="noopener">查看原文 ↗</a>
-      {% endif %}
-      {% if 'content.jsp' in n.url or 'tzggnr.jsp' in n.url %}
-        <span class="tag locked">该详情页校外访问需验证，请到列表页或连接校园网查看</span>
-      {% endif %}
-    </div>
   </div>
 
   {% if n.audience %}
-    <div class="panel">
+    <div class="fieldset">
       <h3>适用对象</h3>
-      <div class="chips">
-        {% for a in n.audience %}<span class="chip">{{ a }}</span>{% endfor %}
-      </div>
+      <div class="tags">{% for a in n.audience %}<span class="tag">{{ a }}</span>{% endfor %}</div>
     </div>
   {% endif %}
 
   {% if versions %}
-    <p style="font-size:12px;color:var(--muted);margin-top:24px">
-      变更记录：{% for v in versions %}{{ v.fetched_at }} {{ v.diff_summary }}；{% endfor %}
-    </p>
+    <div class="fieldset">
+      <h3>变更记录</h3>
+      <ul>{% for v in versions %}<li>{{ v.fetched_at }} {{ v.diff_summary }}</li>{% endfor %}</ul>
+    </div>
   {% endif %}
 
   <div class="pn">
     {% if prev %}
-      <a href="/notice/{{ prev.id }}"><span class="label">← 上一条</span>{{ prev.title[:30] }}</a>
+      <a href="/notice/{{ prev.id }}"><span class="k">← 上一条</span>{{ prev.title[:34] }}</a>
     {% else %}
-      <span class="off"><span class="label">← 上一条</span>已经是第一条</span>
+      <span><span class="k">← 上一条</span>已经是第一条</span>
     {% endif %}
     {% if next %}
-      <a class="next" href="/notice/{{ next.id }}"><span class="label">下一条 →</span>{{ next.title[:30] }}</a>
+      <a href="/notice/{{ next.id }}" style="text-align:right"><span class="k">下一条 →</span>{{ next.title[:34] }}</a>
     {% else %}
-      <span class="next"><span class="label">下一条 →</span>已经是最后一条</span>
+      <span style="text-align:right"><span class="k">下一条 →</span>已经是最后一条</span>
     {% endif %}
   </div>
 

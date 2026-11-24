@@ -57,7 +57,7 @@ def client(tmp_path, monkeypatch):
 def test_portal_home(client):
     resp = client.get("/")
     assert resp.status_code == 200
-    assert "今天想看点什么" in resp.text
+    assert "今天想看" in resp.text
     for name in ("通知聚合", "视频推荐", "项目分享", "便捷工具"):
         assert name in resp.text
 
