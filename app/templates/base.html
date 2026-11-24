@@ -4,7 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}WHU Notice Hub · 武大本科通知{% endblock %}</title>
-  <link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml">
   <style>
     :root{
       --paper:#faf8f2; --paper-2:#f3f0e8; --card:#fffdf9;
@@ -68,7 +67,6 @@
     }
     nav a:hover{color:var(--ink);background:var(--paper-2);text-decoration:none}
     nav a.active{color:var(--brand);background:var(--brand-soft);font-weight:600}
-    nav a.rss{color:var(--gold)}
     .issue{font-size:12px;color:var(--muted);white-space:nowrap;letter-spacing:.04em}
 
     main{padding:34px 0 70px}
@@ -300,6 +298,22 @@
     .mini a:hover{color:var(--brand)}
     .mini .d{margin-left:auto;color:var(--muted);font-size:11.5px;white-space:nowrap}
 
+    /* ---------------- 季节装饰：冬季落雪 ---------------- */
+    .snow{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+    .flake{position:absolute;top:-10vh;color:var(--ink);opacity:.25;animation:snowfall linear infinite;user-select:none}
+    @keyframes snowfall{
+      0%{transform:translate3d(0,-10vh,0) rotate(0deg)}
+      100%{transform:translate3d(4vw,110vh,0) rotate(360deg)}
+    }
+    .season{display:none;font-size:12px;color:var(--muted)}
+    body.winter .season{display:inline}
+    body.winter .kicker::after{content:" · 冬";color:var(--muted);font-weight:400;letter-spacing:.1em}
+    main{position:relative;z-index:1}
+    footer{position:relative;z-index:1}
+    @media (prefers-reduced-motion: reduce){
+      .flake{display:none}
+    }
+
     @media (max-width:900px){
       .hero-ed{grid-template-columns:1fr;gap:22px}
       .hero-side{border-left:none;padding-left:0;border-top:1px solid var(--rule);padding-top:18px}
@@ -336,7 +350,6 @@
       <a href="/projects" class="{% if request.url.path == '/projects' %}active{% endif %}">项目</a>
       <a href="/tools" class="{% if request.url.path == '/tools' %}active{% endif %}">工具</a>
       <a href="/about" class="{% if request.url.path == '/about' %}active{% endif %}">关于</a>
-      <a class="rss" href="/rss.xml">RSS</a>
     </nav>
     {% if total is defined %}<span class="issue">{{ total }} 条</span>{% endif %}
   </div>
@@ -351,11 +364,35 @@
     <span>© 2026 WHU Notice Hub · SEEKers</span>
     <span>数据来自武汉大学各公开网站，仅收录本科生相关通知</span>
     <span style="margin-left:auto">
-      <a href="/archive">归档</a> · <a href="/changelog">更新日志</a> ·
-      <a href="/rss.xml">RSS</a> · <a href="/api/notices?limit=20">API</a> · <a href="/sitemap.xml">Sitemap</a>
+      <a href="/about">关于</a> · <a href="/changelog">更新日志</a> · <a href="/archive">归档</a>
     </span>
+    <span class="season">❄ 珞珈的冬天</span>
     <span class="fine">本站为非官方、非商业项目，一切信息以官网原文为准。</span>
   </div>
 </footer>
+
+<div class="snow" id="snow" aria-hidden="true"></div>
+<script>
+  (function () {
+    var month = new Date().getMonth() + 1;
+    var winter = [11, 12, 1, 2].indexOf(month) !== -1;
+    if (!winter) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.body.classList.add('winter');
+    var host = document.getElementById('snow');
+    if (!host) return;
+    for (var i = 0; i < 16; i++) {
+      var f = document.createElement('span');
+      f.className = 'flake';
+      f.textContent = '❄';
+      f.style.left = (Math.random() * 100).toFixed(1) + 'vw';
+      f.style.fontSize = (7 + Math.random() * 9).toFixed(0) + 'px';
+      f.style.opacity = (0.12 + Math.random() * 0.28).toFixed(2);
+      f.style.animationDuration = (7 + Math.random() * 9).toFixed(1) + 's';
+      f.style.animationDelay = (-Math.random() * 16).toFixed(1) + 's';
+      host.appendChild(f);
+    }
+  })();
+</script>
 </body>
 </html>

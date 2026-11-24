@@ -39,11 +39,11 @@ tools:
     url: /notices
     desc: 本科通知聚合，支持筛选与搜索
     tag: 本站
-  - name: 通知 RSS
-    url: /rss.xml
-    desc: 用阅读器订阅最新通知
-    tag: 本站
-  - name: 通知 API
-    url: /api/notices?limit=20
-    desc: JSON 接口，方便二次开发
-    tag: 开发
+  - name: 站内搜索
+    url: /notices
+    desc: 按关键词找通知，如「奖学金」「推免」
+    tag: 搜索
+  - name: 按月归档
+    url: /archive
+    desc: 按月份翻阅历史通知
+    tag: 归档
