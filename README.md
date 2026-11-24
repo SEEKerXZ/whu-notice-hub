@@ -198,7 +198,7 @@ python -m pytest -q
 
 ## 作者
 
-**SEEKers** · 武汉大学在校本科生 · 独立开发与维护
+**修远Eker** · 武汉大学在校本科生 · 独立开发与维护
 
 - 站点：关于页 `/about`
 - 反馈：githubseeker@163.com

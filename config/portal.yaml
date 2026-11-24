@@ -27,7 +27,7 @@ projects:
   - name: WHU Notice Hub
     url: https://github.com/SEEKerXZ/whu-notice-hub
     desc: 本站自身：武大本科生通知聚合 + QQ 机器人
-    author: SEEKers
+    author: 修远Eker
   - name: 待添加你的项目
     url: https://github.com/
     desc: 在 config/portal.yaml 里补充同学的项目链接
