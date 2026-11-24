@@ -1,16 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="crumbs"><a href="/">首页</a><span>/</span><span>视频推荐</span></div>
-<div class="page-head"><h1>视频推荐</h1><span class="count">{{ videos|length }} 个</span></div>
+<section class="page-hero pink">
+  <div class="ph-row">
+    <div class="ph-ico">🎬</div>
+    <div>
+      <div class="ph-eyebrow">Videos</div>
+      <h1>视频推荐</h1>
+    </div>
+  </div>
+  <div class="ph-sub">公开课、系统课、讲座与技术分享。先从高数线代开始，后面会继续补。</div>
+  <div class="ph-stats">
+    <span class="ph-stat"><b>{{ videos|length }}</b><span>个推荐</span></span>
+    <a class="ph-stat" href="/notices"><b>去通知</b><span>看看有什么新消息</span></a>
+  </div>
+</section>
 
-<div class="card-grid">
+<div class="tiles">
   {% for v in videos %}
-    <a class="scard" href="{{ v.url }}" target="_blank" rel="noopener">
-      <div class="t">🎬 {{ v.title }}</div>
-      <div class="d">{{ v.desc or '' }}</div>
-      <div class="m">
-        {% if v.tag %}<span class="tag">{{ v.tag }}</span>{% endif %}
-        <span>打开 ↗</span>
+    <a class="tile" href="{{ v.url }}" target="_blank" rel="noopener">
+      <div class="thumb t2" style="font-size:30px">▶</div>
+      <div class="tbody">
+        <div class="tt">{{ v.title }}</div>
+        <div class="td">{{ v.desc or '' }}</div>
+        <div class="tm">
+          {% if v.tag %}<span class="tag {{ v.tag|tag_class }}">{{ v.tag }}</span>{% endif %}
+          <span class="go">打开 ↗</span>
+        </div>
       </div>
     </a>
   {% endfor %}

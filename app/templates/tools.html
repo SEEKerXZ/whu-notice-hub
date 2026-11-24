@@ -1,16 +1,30 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="crumbs"><a href="/">首页</a><span>/</span><span>便捷工具</span></div>
-<div class="page-head"><h1>便捷工具</h1><span class="count">{{ tools|length }} 个</span></div>
+<section class="page-hero green">
+  <div class="ph-row">
+    <div class="ph-ico">🛠</div>
+    <div>
+      <div class="ph-eyebrow">Tools</div>
+      <h1>便捷工具</h1>
+    </div>
+  </div>
+  <div class="ph-sub">通知检索、订阅、接口，以及后续要加的 LaTeX/Typst 排版、校历等工具。</div>
+  <div class="ph-stats">
+    <span class="ph-stat"><b>{{ tools|length }}</b><span>个工具</span></span>
+  </div>
+</section>
 
-<div class="card-grid">
+<div class="tiles">
   {% for t in tools %}
-    <a class="scard" href="{{ t.url }}" {% if not t.url.startswith('/') %}target="_blank" rel="noopener"{% endif %}>
-      <div class="t">🛠 {{ t.name }}</div>
-      <div class="d">{{ t.desc or '' }}</div>
-      <div class="m">
-        {% if t.tag %}<span class="tag">{{ t.tag }}</span>{% endif %}
-        <span>打开 →</span>
+    <a class="tile" href="{{ t.url }}" {% if not t.url.startswith('/') %}target="_blank" rel="noopener"{% endif %}>
+      <div class="thumb t3" style="font-size:30px">⚙</div>
+      <div class="tbody">
+        <div class="tt">{{ t.name }}</div>
+        <div class="td">{{ t.desc or '' }}</div>
+        <div class="tm">
+          {% if t.tag %}<span class="tag {{ t.tag|tag_class }}">{{ t.tag }}</span>{% endif %}
+          <span class="go">打开 →</span>
+        </div>
       </div>
     </a>
   {% endfor %}

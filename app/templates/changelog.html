@@ -1,7 +1,15 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
-<div class="crumbs"><a href="/">首页</a><span>/</span><span>更新日志</span></div>
-<div class="page-head"><h1>更新日志</h1><span class="count">共 {{ entries|length }} 个版本</span></div>
+<section class="page-hero">
+  <div class="ph-row">
+    <div class="ph-ico">📝</div>
+    <div>
+      <div class="ph-eyebrow">Changelog</div>
+      <h1>更新日志</h1>
+    </div>
+  </div>
+  <div class="ph-sub">站点每个版本的改动记录，共 {{ entries|length }} 个版本。</div>
+</section>
 
 <div class="prose">
   {% for e in entries %}

@@ -82,6 +82,18 @@ def _level_class(score: object) -> str:
 templates.env.filters["level_label"] = _level_label
 templates.env.filters["level_class"] = _level_class
 
+TAG_CLASS = {
+    "高数": "t-blue", "线代": "t-violet", "合集": "t-amber", "学习": "t-green",
+    "公开课": "t-cyan", "讲座": "t-pink", "本站": "t-green", "开发": "t-cyan",
+}
+
+
+def _tag_class(value: object) -> str:
+    return TAG_CLASS.get(str(value), "t-blue")
+
+
+templates.env.filters["tag_class"] = _tag_class
+
 app = FastAPI(title="WHU Notice Hub", version="0.1.0",
               description="武汉大学本科生通知聚合 · 公开只读服务")
 

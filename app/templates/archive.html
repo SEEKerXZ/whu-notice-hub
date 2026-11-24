@@ -1,7 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="crumbs"><a href="/">首页</a><span>/</span><span>归档</span></div>
-<div class="page-head"><h1>按月归档</h1><span class="count">共 {{ total }} 条</span></div>
+<section class="page-hero amber">
+  <div class="ph-row">
+    <div class="ph-ico">🗂</div>
+    <div>
+      <div class="ph-eyebrow">Archive</div>
+      <h1>按月归档</h1>
+    </div>
+  </div>
+  <div class="ph-sub">按月份浏览历史通知，共 {{ total }} 条。</div>
+  <div class="ph-stats">
+    <a class="ph-stat" href="/notices"><b>返回通知</b><span>看最新时间线</span></a>
+    <a class="ph-stat" href="/rss.xml"><b>RSS</b><span>订阅更新</span></a>
+  </div>
+</section>
 
 <div class="months">
   {% for m in months %}

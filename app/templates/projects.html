@@ -1,16 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="crumbs"><a href="/">首页</a><span>/</span><span>项目分享</span></div>
-<div class="page-head"><h1>项目分享</h1><span class="count">{{ projects|length }} 个</span></div>
+<section class="page-hero violet">
+  <div class="ph-row">
+    <div class="ph-ico">🧩</div>
+    <div>
+      <div class="ph-eyebrow">Projects</div>
+      <h1>项目分享</h1>
+    </div>
+  </div>
+  <div class="ph-sub">同学做的项目、课程设计、开源作品。想投稿自己的仓库，在群里 @通通 发链接即可。</div>
+  <div class="ph-stats">
+    <span class="ph-stat"><b>{{ projects|length }}</b><span>个项目</span></span>
+    <a class="ph-stat" href="/notices"><b>去通知</b><span>看看有什么新消息</span></a>
+  </div>
+</section>
 
-<div class="card-grid">
+<div class="tiles">
   {% for p in projects %}
-    <a class="scard" href="{{ p.url }}" target="_blank" rel="noopener">
-      <div class="t">🧩 {{ p.name }}</div>
-      <div class="d">{{ p.desc or '' }}</div>
-      <div class="m">
-        {% if p.author %}<span class="tag">{{ p.author }}</span>{% endif %}
-        <span>查看 ↗</span>
+    <a class="tile" href="{{ p.url }}" target="_blank" rel="noopener">
+      <div class="thumb t5" style="font-size:32px">⌘</div>
+      <div class="tbody">
+        <div class="tt">{{ p.name }}</div>
+        <div class="td">{{ p.desc or '' }}</div>
+        <div class="tm">
+          {% if p.author %}<span class="tag t-violet">{{ p.author }}</span>{% endif %}
+          <span class="go">查看 ↗</span>
+        </div>
       </div>
     </a>
   {% endfor %}
