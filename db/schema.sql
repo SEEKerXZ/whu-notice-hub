@@ -177,7 +177,20 @@ CREATE TABLE IF NOT EXISTS notice_actions (
 );
 
 -- ---------------------------------------------------------------------------
--- 10. AI 问答用量（每人/每群/全站每日次数）
+-- 10. 项目分享（投稿收录）
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS projects (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL,
+    url         TEXT NOT NULL UNIQUE,
+    description TEXT,
+    author      TEXT,
+    status      TEXT NOT NULL DEFAULT 'active',
+    created_at  TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+
+-- ---------------------------------------------------------------------------
+-- 11. AI 问答用量（每人/每群/全站每日次数）
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS ai_usage (
     day        TEXT NOT NULL,           -- YYYY-MM-DD

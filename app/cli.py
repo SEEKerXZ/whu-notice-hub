@@ -232,6 +232,36 @@ def cmd_intro_test(args) -> int:
     return 0
 
 
+def cmd_project_list(_args) -> int:
+    from . import projects
+
+    conn = _conn()
+    rows = projects.listing(conn)
+    for r in rows:
+        print(f"#{r['id']:<3} {r['name'][:30]:<32} {r['author'] or '':<12} {r['url']}")
+    print(f"\n共 {len(rows)} 个项目")
+    return 0
+
+
+def cmd_project_add(args) -> int:
+    from . import projects
+
+    conn = _conn()
+    ok, message = projects.add(
+        conn, args.url, name=args.name, description=args.desc, author=args.author,
+    )
+    print(message)
+    return 0 if ok else 1
+
+
+def cmd_project_remove(args) -> int:
+    from . import projects
+
+    conn = _conn()
+    print("已删除" if projects.remove(conn, args.target) else "没找到这个项目")
+    return 0
+
+
 def cmd_serve(args) -> int:
     import uvicorn
 
@@ -286,6 +316,15 @@ def build_parser() -> argparse.ArgumentParser:
     it = sub.add_parser("intro-test", help="测试人物介绍彩蛋")
     it.add_argument("text", help="例如：介绍下胡豪宇")
 
+    sub.add_parser("project-list", help="列出分享的项目")
+    pa = sub.add_parser("project-add", help="添加一个项目")
+    pa.add_argument("url", help="项目链接，如 GitHub 仓库地址")
+    pa.add_argument("--name")
+    pa.add_argument("--desc")
+    pa.add_argument("--author")
+    pr = sub.add_parser("project-remove", help="删除项目（链接或 id）")
+    pr.add_argument("target")
+
     s = sub.add_parser("serve", help="启动 Web 服务")
     s.add_argument("--host", default="0.0.0.0")
     s.add_argument("--port", type=int, default=8000)
@@ -303,6 +342,8 @@ def main(argv: list[str] | None = None) -> int:
         "qq-preview": cmd_qq_preview, "qq-run": cmd_qq_run,
         "ai-test": cmd_ai_test, "ai-quota": cmd_ai_quota,
         "intro-test": cmd_intro_test,
+        "project-list": cmd_project_list, "project-add": cmd_project_add,
+        "project-remove": cmd_project_remove,
     }
     return handlers[args.cmd](args)
 

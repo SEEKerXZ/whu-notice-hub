@@ -168,6 +168,21 @@ app/
 
 当前版本 v1.0.0（标题 + 概览模式）。
 
+## 项目投稿
+
+项目分享板块不再是手改 YAML，改为数据库 + 三种投稿方式：
+
+```bash
+# 1) QQ 群：@通通 投稿 https://github.com/xxx/yyy 一句话介绍
+# 2) 网页：打开 /projects/new，输入口令后填表（口令在 .env 的 PROJECT_SUBMIT_KEY）
+# 3) CLI：
+python -m app.cli project-add https://github.com/xxx/yyy --desc "介绍" --author "作者"
+python -m app.cli project-list
+python -m app.cli project-remove https://github.com/xxx/yyy
+```
+
+GitHub 链接会自动抓取仓库名、简介与作者，同链接只收录一次。
+
 ## 测试
 
 ```bash

@@ -11,7 +11,7 @@ import asyncio
 import logging
 import os
 
-from . import ai, db, intro, persona, quota
+from . import ai, db, intro, persona, projects, quota
 
 log = logging.getLogger(__name__)
 
@@ -128,6 +128,20 @@ def run() -> int:
             # 彩蛋：问「胡豪宇/老大/bjhh…」时回复固定简介（不消耗 AI 额度）
             if intro.matches(message.content):
                 await message.reply(content=intro.build_reply()[:1500])
+                return
+
+            # 项目投稿：@通通 投稿 <链接> [一句话介绍]
+            submission = projects.parse_submission(message.content)
+            if submission:
+                url, desc = submission
+                author = getattr(getattr(message, "author", None), "username", None) or "群友"
+                conn = db.connect()
+                try:
+                    ok, text = projects.add(conn, url, description=desc, author=author)
+                finally:
+                    conn.close()
+                prefix = "喵～" if persona.enabled() else ""
+                await message.reply(content=f"{prefix}{text}"[:1500])
                 return
 
             kind = parse_command(message.content)

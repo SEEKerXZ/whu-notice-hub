@@ -22,16 +22,12 @@ videos:
     desc: 高数、线代、概率论等全部课程与讲义更新都在这里
     tag: 合集
 
-# 项目分享：name / url / desc / author
+# 项目分享：仅用于首次初始化导入数据库；之后用「投稿」命令/网页/CLI 管理
 projects:
   - name: WHU Notice Hub
     url: https://github.com/SEEKerXZ/whu-notice-hub
     desc: 本站自身：武大本科生通知聚合 + QQ 机器人
     author: 修远Eker
-  - name: 待添加你的项目
-    url: https://github.com/
-    desc: 在 config/portal.yaml 里补充同学的项目链接
-    author: 同学
 
 # 便捷工具：name / url / desc / tag
 tools:

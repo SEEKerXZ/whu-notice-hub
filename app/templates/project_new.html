@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}投稿项目 · WHU Notice Hub{% endblock %}
+{% block content %}
+<div class="page-top">
+  <div class="kicker">Submit · 投稿</div>
+  <h1>投稿一个项目</h1>
+  <p>填链接即可，GitHub 仓库会自动读取名称和简介。</p>
+</div>
+
+{% if closed %}
+  <div class="prose">
+    <p>网页投稿暂未开放。可以到 QQ 群里发：<code>@通通 投稿 &lt;链接&gt;</code></p>
+    <p><a class="btn ghost" href="/projects">返回项目列表</a></p>
+  </div>
+{% else %}
+  <form method="post" action="/projects/new" style="max-width:560px">
+    {% if error %}<p style="color:var(--pink);font-size:13.5px">{{ error }}</p>{% endif %}
+    <div class="filters" style="display:block;border:none;padding:0;background:transparent;box-shadow:none">
+      <div class="fg">
+        <label>口令</label>
+        <input type="password" name="key" value="{{ key }}" required>
+      </div>
+      <div class="fg">
+        <label>项目链接（必填）</label>
+        <input type="text" name="url" placeholder="https://github.com/用户名/仓库" required>
+      </div>
+      <div class="fg">
+        <label>名称（留空自动抓取）</label>
+        <input type="text" name="name" placeholder="项目名">
+      </div>
+      <div class="fg">
+        <label>一句话介绍</label>
+        <input type="text" name="desc" placeholder="它是什么、解决什么问题">
+      </div>
+      <div class="fg">
+        <label>作者（留空自动抓取）</label>
+        <input type="text" name="author" placeholder="你的名字">
+      </div>
+      <button class="btn" type="submit">提交</button>
+      <a class="reset" href="/projects" style="display:inline-block;margin-left:10px">取消</a>
+    </div>
+  </form>
+{% endif %}
+{% endblock %}

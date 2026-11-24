@@ -70,6 +70,30 @@ def test_portal_subpages(client):
     assert "便捷工具" in tools.text
 
 
+def test_projects_submit_closed_by_default(client):
+    resp = client.get("/projects/new")
+    assert resp.status_code == 200
+    assert "暂未开放" in resp.text
+
+
+def test_projects_submit_with_key(client, monkeypatch):
+    monkeypatch.setenv("PROJECT_SUBMIT_KEY", "lemon")
+    monkeypatch.setenv("PROJECTS_NO_FETCH", "1")
+
+    bad = client.post("/projects/new", data={"key": "wrong", "url": "https://github.com/a/b"})
+    assert bad.status_code == 403
+
+    ok = client.post(
+        "/projects/new",
+        data={"key": "lemon", "url": "https://github.com/a/notice-tool",
+              "name": "通知小工具", "desc": "帮同学查通知", "author": "同学"},
+        follow_redirects=False,
+    )
+    assert ok.status_code == 303
+    page = client.get("/projects")
+    assert "通知小工具" in page.text
+
+
 def test_index_renders(client):
     resp = client.get("/notices")
     assert resp.status_code == 200

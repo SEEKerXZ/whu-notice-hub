@@ -2,6 +2,18 @@
 
 CHANGELOG = [
     {
+        "version": "v2.1.0",
+        "date": "2026-11-24",
+        "title": "项目投稿简化",
+        "items": [
+            "项目改为数据库存储，不再需要手改 YAML 或传文件",
+            "QQ 群一句话投稿：@通通 投稿 <链接> [介绍]，自动收录",
+            "网页投稿表单 /projects/new（口令保护，口令可改）",
+            "GitHub 链接自动抓取仓库名、简介与作者；同链接自动去重",
+            "新增 CLI：project-list / project-add / project-remove",
+        ],
+    },
+    {
         "version": "v2.0.2",
         "date": "2026-11-24",
         "title": "作者署名更正",

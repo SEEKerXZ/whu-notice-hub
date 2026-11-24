@@ -17,7 +17,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config  # noqa: F401  加载 .env
-from . import db, portal
+from . import db, portal, projects
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -283,15 +283,61 @@ def videos_page(request: Request):
 
 @app.get("/projects", response_class=HTMLResponse)
 def projects_page(request: Request):
-    data = portal.load()
     conn = _conn()
     try:
+        rows = [dict(r) for r in projects.listing(conn)]
         total = db.count_notices(conn)
     finally:
         conn.close()
+    data = portal.load()
     return templates.TemplateResponse(request, "projects.html", {
-        "projects": data["projects"], "total": total,
+        "projects": rows, "total": total,
+        "submit_open": bool(os.getenv("PROJECT_SUBMIT_KEY", "").strip()),
+        "tools": data["tools"],
     })
+
+
+@app.get("/projects/new", response_class=HTMLResponse)
+def project_submit_form(request: Request, key: str = ""):
+    if not os.getenv("PROJECT_SUBMIT_KEY", "").strip():
+        return templates.TemplateResponse(request, "project_new.html", {
+            "closed": True, "key": "", "error": None,
+        }, status_code=200)
+    return templates.TemplateResponse(request, "project_new.html", {
+        "closed": False, "key": key, "error": None,
+    })
+
+
+@app.post("/projects/new", response_class=HTMLResponse)
+async def project_submit(request: Request):
+    form = await request.form()
+    key = str(form.get("key") or "")
+    expected = os.getenv("PROJECT_SUBMIT_KEY", "").strip()
+    if not expected:
+        return templates.TemplateResponse(request, "project_new.html", {
+            "closed": True, "key": "", "error": None,
+        }, status_code=200)
+    if key != expected:
+        return templates.TemplateResponse(request, "project_new.html", {
+            "closed": False, "key": "", "error": "口令不正确",
+        }, status_code=403)
+
+    conn = _conn()
+    try:
+        ok, message = projects.add(
+            conn,
+            str(form.get("url") or ""),
+            name=str(form.get("name") or "").strip() or None,
+            description=str(form.get("desc") or "").strip() or None,
+            author=str(form.get("author") or "").strip() or None,
+        )
+    finally:
+        conn.close()
+    if not ok:
+        return templates.TemplateResponse(request, "project_new.html", {
+            "closed": False, "key": key, "error": message,
+        }, status_code=400)
+    return RedirectResponse("/projects", status_code=303)
 
 
 @app.get("/tools", response_class=HTMLResponse)

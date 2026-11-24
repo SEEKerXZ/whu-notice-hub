@@ -34,6 +34,31 @@ def init_db(conn: sqlite3.Connection) -> None:
            )"""
     )
     _migrate(conn)
+    _seed_projects(conn)
+    conn.commit()
+
+
+def _seed_projects(conn: sqlite3.Connection) -> None:
+    """首次初始化时，把 config/portal.yaml 里的项目导入数据库；之后以数据库为准。"""
+    from .projects import ensure_table
+
+    ensure_table(conn)
+    if conn.execute("SELECT COUNT(*) c FROM projects").fetchone()["c"]:
+        return
+    try:
+        import yaml
+
+        data = yaml.safe_load((ROOT / "config" / "portal.yaml").read_text(encoding="utf-8")) or {}
+    except Exception:  # noqa: BLE001
+        return
+    for p in data.get("projects") or []:
+        url = (p.get("url") or "").strip()
+        if not url.startswith(("http://", "https://")):
+            continue
+        conn.execute(
+            "INSERT OR IGNORE INTO projects (name, url, description, author) VALUES (?,?,?,?)",
+            (p.get("name") or url, url.rstrip("/"), p.get("desc") or "", p.get("author") or ""),
+        )
     conn.commit()
 
 
