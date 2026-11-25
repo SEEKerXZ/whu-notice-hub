@@ -38,7 +38,7 @@
     *{box-sizing:border-box}
     html{scroll-behavior:smooth;color-scheme:light}
     body{
-      margin:0;background:
+      margin:0;min-height:100vh;display:flex;flex-direction:column;background:
         radial-gradient(1100px 520px at 88% -180px, rgba(240,179,197,.18), transparent 62%),
         radial-gradient(1300px 560px at 26% -260px, rgba(140,203,171,.16), transparent 70%),
         linear-gradient(180deg,#fdfbf5 0%,#f9f5ea 55%,#f4efe1 100%);
@@ -59,7 +59,7 @@
       -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
     }
     .masthead{
-      position:sticky;top:0;z-index:50;
+      position:sticky;top:0;z-index:50;flex-shrink:0;
       background:color-mix(in srgb,var(--paper) 90%,transparent);
       backdrop-filter:saturate(1.2) blur(12px);
       border-bottom:1px solid var(--rule);
@@ -381,7 +381,7 @@
     .author .lk{margin-left:auto;display:flex;gap:10px;font-size:13.5px}
 
     /* ---------------- 页脚 ---------------- */
-    footer{border-top:1px solid var(--rule);padding:26px 0 34px;margin-top:30px}
+    footer{border-top:1px solid var(--rule);padding:26px 0 34px;margin-top:30px;flex-shrink:0;width:100%}
     footer .shell{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline;font-size:13px;color:var(--muted)}
     footer a{color:var(--muted)}
     footer a:hover{color:var(--brand)}
@@ -415,7 +415,7 @@
       -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 62%,transparent 100%);
       mask-image:linear-gradient(180deg,#000 0%,#000 62%,transparent 100%);
     }
-    main{position:relative;z-index:1}
+    main{position:relative;z-index:1;flex:1 0 auto;width:100%}
     footer{position:relative;z-index:1}
     @media (prefers-reduced-motion: reduce){
       .flake{display:none}
