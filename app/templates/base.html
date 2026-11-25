@@ -772,6 +772,16 @@
       body{animation:pageIn .42s ease both}
     }
 
+    /* ---------------- 加载时组件逐个出现 ---------------- */
+    @keyframes loadRise{
+      from{opacity:0;translate:0 18px}
+      to{opacity:1;translate:0 0}
+    }
+    .load-rise{animation:loadRise .55s cubic-bezier(.22,.61,.36,1) both}
+    @media (prefers-reduced-motion: reduce){
+      .load-rise{animation:none !important}
+    }
+
   </style>
 </head>
 <body class="{% if request.url.path.startswith('/videos') %}page-videos{% elif request.url.path.startswith('/projects') %}page-projects{% elif request.url.path.startswith('/tools') %}page-tools{% elif request.url.path == '/' %}page-home{% else %}page-notices{% endif %}">
@@ -997,6 +1007,20 @@
       raf = requestAnimationFrame(drawDots);
     }
 
+    /* ---------- 加载时：首屏组件逐个出现 ---------- */
+    (function () {
+      if (reduce) return;
+      var seq = [];
+      var hero = document.querySelector('.hero-ed');
+      if (hero) { Array.prototype.forEach.call(hero.children, function (c) { seq.push(c); }); }
+      Array.prototype.forEach.call(document.querySelectorAll('.chapters > .chapter'), function (c) { seq.push(c); });
+      Array.prototype.forEach.call(document.querySelectorAll('main .sec, main .sheet, .layout > .filters, .layout .tabs'), function (c) { seq.push(c); });
+      seq.forEach(function (el, i) {
+        el.style.animationDelay = Math.min(0.08 + i * 0.07, 0.95).toFixed(2) + 's';
+        el.classList.add('load-rise');
+      });
+    })();
+
     /* ---------- 卡片倾斜 + 液态光斑 ---------- */
     if (!reduce) {
       Array.prototype.forEach.call(
@@ -1063,7 +1087,7 @@
         revealEls.forEach(function (el, i) {
           el.classList.add('reveal');
           el.classList.add('is-out');
-          el.style.transitionDelay = ((i % 4) * 0.045).toFixed(3) + 's';
+          el.style.transitionDelay = Math.min(i * 0.05, 0.6).toFixed(3) + 's';
         });
         var revealObserver = new IntersectionObserver(function (entries) {
           entries.forEach(function (en) {
