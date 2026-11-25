@@ -186,12 +186,21 @@
     .chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
     .chk input{accent-color:var(--brand)}
 
-    .stream{display:flex;flex-direction:column}
+    .stream{display:flex;flex-direction:column;gap:14px}
     .entry{
-      display:grid;grid-template-columns:80px 1fr;gap:24px;padding:24px 0;
-      border-bottom:1px solid var(--rule);
+      position:relative;overflow:hidden;will-change:transform;
+      display:grid;grid-template-columns:80px 1fr;gap:24px;padding:24px 26px;
+      background:var(--card);border:1px solid var(--rule);border-radius:20px;
+      box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.04);
+      transition:transform .22s cubic-bezier(.22,.61,.36,1),border-color .22s,box-shadow .22s;
     }
-    .entry:first-child{padding-top:4px}
+    .entry:hover{
+      border-color:color-mix(in srgb,var(--sakura) 45%,var(--rule));
+      transform:translateY(-3px);
+      box-shadow:0 18px 40px color-mix(in srgb,var(--sakura) 14%,transparent),inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .entry .date{transition:transform .25s ease}
+    .entry:hover .date{transform:translateX(-3px)}
     .entry .date{
       font-family:var(--serif);text-align:right;color:var(--muted);line-height:1.25;
       padding-top:2px;
@@ -432,10 +441,10 @@
     /* 卡片：扫色 + 图标露出 + 倾斜（由 JS 写入 --rx/--ry） */
     .chapter,.tile{
       position:relative;overflow:hidden;will-change:transform;
-      transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(var(--ty,0px));
+      transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translate3d(var(--mgx,0px),calc(var(--ty,0px) + var(--mgy,0px)),0);
       transition:transform .22s cubic-bezier(.22,.61,.36,1),background .25s,border-color .25s,box-shadow .25s;
     }
-    .chapter::before,.tile::before{
+    .chapter::before,.tile::before,.entry::before{
       content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
       background:radial-gradient(circle at var(--mx,50%) var(--my,50%),
         color-mix(in srgb,var(--sec,var(--sakura)) 52%,transparent) 0%,
@@ -444,8 +453,8 @@
       transform:scale(0);transform-origin:var(--mx,50%) var(--my,50%);
       opacity:0;transition:transform .5s cubic-bezier(.22,.61,.36,1),opacity .3s;
     }
-    .chapter:hover::before,.tile:hover::before{transform:scale(2.1);opacity:1}
-    .chapter>*,.tile>*{position:relative;z-index:1}
+    .chapter:hover::before,.tile:hover::before,.entry:hover::before{transform:scale(2.1);opacity:1}
+    .chapter>*,.tile>*,.entry>*{position:relative;z-index:1}
     .chapter .icon{transition:transform .38s cubic-bezier(.22,.61,.36,1)}
     .chapter:hover .icon{transform:translateY(-6px) scale(1.2)}
     .tile .thumb{transition:transform .5s cubic-bezier(.22,.61,.36,1),filter .3s}
@@ -489,7 +498,8 @@
     .hero-ed>div,.hero-ed>aside{position:relative;z-index:1}
 
     @media (prefers-reduced-motion: reduce){
-      .chapter,.tile{transform:none !important}
+      html{scroll-behavior:auto}
+      .chapter,.tile,.entry{transform:none !important}
       .cursor-dot,.cursor-ring{display:none !important}
     }
 
@@ -795,7 +805,8 @@
 
     /* ---------- 卡片倾斜 ---------- */
     if (!reduce) {
-      Array.prototype.forEach.call(document.querySelectorAll('.chapter, .tile'), function (el) {
+      Array.prototype.forEach.call(document.querySelectorAll('.chapter, .tile, .entry'), function (el) {
+        var isEntry = el.classList.contains('entry');
         var setOrigin = function (e) {
           var r = el.getBoundingClientRect();
           if (!r.width || !r.height) return;
@@ -804,6 +815,7 @@
         };
         el.addEventListener('pointerenter', setOrigin);
         el.addEventListener('mousemove', function (e) {
+          if (isEntry) { setOrigin(e); return; }
           var r = el.getBoundingClientRect();
           var px = (e.clientX - r.left) / r.width - 0.5;
           var py = (e.clientY - r.top) / r.height - 0.5;
@@ -828,6 +840,52 @@
           el.style.transform = 'translate(' + (dx * 0.16).toFixed(1) + 'px,' + (dy * 0.16).toFixed(1) + 'px)';
         });
         el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('.chapter, .tile'), function (el) {
+        el.addEventListener('mousemove', function (e) {
+          var r = el.getBoundingClientRect();
+          var dx = e.clientX - (r.left + r.width / 2);
+          var dy = e.clientY - (r.top + r.height / 2);
+          el.style.setProperty('--mgx', (dx * 0.05).toFixed(1) + 'px');
+          el.style.setProperty('--mgy', (dy * 0.05).toFixed(1) + 'px');
+        });
+        el.addEventListener('mouseleave', function () {
+          el.style.setProperty('--mgx', '0px');
+          el.style.setProperty('--mgy', '0px');
+        });
+      });
+    }
+
+    /* ---------- 平滑滚动（鼠标滚轮缓动；触控板保持原生） ---------- */
+    if (!reduce) {
+      var targetY = window.scrollY, scrollRaf = null, scrollAnimating = false;
+      var maxScroll = function () {
+        return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      };
+      var scrollStep = function () {
+        targetY = Math.max(0, Math.min(maxScroll(), targetY));
+        var diff = targetY - window.scrollY;
+        if (Math.abs(diff) < 0.6) {
+          window.scrollTo(0, targetY);
+          scrollAnimating = false;
+          scrollRaf = null;
+          return;
+        }
+        window.scrollTo(0, window.scrollY + diff * 0.18);
+        scrollRaf = requestAnimationFrame(scrollStep);
+      };
+      window.addEventListener('wheel', function (e) {
+        if (e.ctrlKey || e.shiftKey || e.deltaMode !== 0) return;
+        if (Math.abs(e.deltaY) < 30) return;
+        e.preventDefault();
+        targetY = (scrollAnimating ? targetY : window.scrollY) + e.deltaY;
+        if (!scrollAnimating) {
+          scrollAnimating = true;
+          scrollRaf = requestAnimationFrame(scrollStep);
+        }
+      }, { passive: false });
+      window.addEventListener('scroll', function () {
+        if (!scrollAnimating) targetY = window.scrollY;
       });
     }
 
