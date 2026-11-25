@@ -6,40 +6,42 @@
   <title>{% block title %}WHU Notice Hub · 武大本科通知{% endblock %}</title>
   <style>
     :root{
-      --paper:#2b332d; --paper-2:#333c35; --card:#3a443c;
-      --ink:#faf7ee; --ink-2:#e6e9dd; --muted:#bdc3b3;
-      --rule:rgba(255,255,255,.14); --rule-2:rgba(255,255,255,.08);
-      --brand:#98d6b8; --brand-2:#b4e6cb; --brand-soft:rgba(140,203,171,.16);
-      --sakura:#f6c2d1; --sakura-2:#fad4e0; --sakura-soft:rgba(240,179,197,.16);
-      --glass-bg:rgba(255,255,255,.065);
-      --glass-bg-strong:rgba(255,255,255,.10);
-      --glass-border:rgba(255,255,255,.15);
-      --on-sakura:#1c1216;
-      --pink:#e39aad; --pink-soft:#2a1a1f;
-      --gold:#d9b26a; --gold-soft:#241e12;
-      --blue:#8fb8d8; --blue-soft:#15202a;
-      --violet:#b9a3e0; --violet-soft:#1e1929;
+      --paper:#faf7ef; --paper-2:#f3eee1; --card:#fffdf8;
+      --ink:#23281f; --ink-2:#414a3c; --muted:#7b8472;
+      --rule:rgba(35,40,31,.14); --rule-2:rgba(35,40,31,.08);
+      --brand:#1f5c46; --brand-2:#2f7d5f; --brand-soft:rgba(31,92,70,.10);
+      --sakura:#f6c2d1; --sakura-2:#fad4e0; --sakura-soft:rgba(240,179,197,.22);
+      --glass-bg:rgba(255,255,255,.58);
+      --glass-bg-strong:rgba(255,255,255,.78);
+      --glass-border:rgba(35,40,31,.12);
+      --on-sakura:#2a141d;
+      --accent-ink:#b4566c;
+      --dot-color:#b4566c;
+      --pink:#b4566c; --pink-soft:rgba(180,86,108,.14);
+      --gold:#8a6414; --gold-soft:rgba(154,107,31,.16);
+      --blue:#2b5f8a; --blue-soft:rgba(43,95,138,.12);
+      --violet:#6b4f9e; --violet-soft:rgba(107,79,158,.14);
       --r-sm:12px; --r-md:18px; --r-lg:24px; --r-pill:999px;
-      --shadow:0 1px 0 rgba(0,0,0,.45);
+      --shadow:0 1px 0 rgba(60,50,40,.05);
       --serif:"Songti SC","Noto Serif SC",Georgia,"Times New Roman",serif;
       --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
     }
     /* 四个板块的代表色：进入对应页面时整站主色随之切换 */
-    body.page-notices{--sakura:#f0b3c5;--sakura-2:#f7c9d6;--sakura-soft:#3a2430;--on-sakura:#2a141d}
-    body.page-videos{--sakura:#ffa95c;--sakura-2:#ffc287;--sakura-soft:#3a2a1d;--on-sakura:#2a1706}
-    body.page-projects{--sakura:#bda6ef;--sakura-2:#d2c1f7;--sakura-soft:#2c2438;--on-sakura:#1c142e}
-    body.page-tools{--sakura:#79d9c6;--sakura-2:#9be8d8;--sakura-soft:#1f3531;--on-sakura:#0e2520}
+    body.page-notices{--sakura:#f0b3c5;--sakura-2:#f7c9d6;--sakura-soft:rgba(240,179,197,.22);--on-sakura:#2a141d;--accent-ink:#b4566c;--dot-color:#b4566c}
+    body.page-videos{--sakura:#ffa95c;--sakura-2:#ffc287;--sakura-soft:rgba(255,169,92,.22);--on-sakura:#2a1706;--accent-ink:#b35f17;--dot-color:#c96a1e}
+    body.page-projects{--sakura:#bda6ef;--sakura-2:#d2c1f7;--sakura-soft:rgba(189,166,239,.22);--on-sakura:#1c142e;--accent-ink:#6d50b8;--dot-color:#7a5cc0}
+    body.page-tools{--sakura:#79d9c6;--sakura-2:#9be8d8;--sakura-soft:rgba(121,217,198,.22);--on-sakura:#0e2520;--accent-ink:#1f8574;--dot-color:#1f8574}
     /* 二级页卡片缩略图跟随页面主色 */
     .tile .thumb,.tile .thumb.t2,.tile .thumb.t3,.tile .thumb.t5{
       background:linear-gradient(135deg,var(--sakura-2),var(--sakura));
     }
     *{box-sizing:border-box}
-    html{scroll-behavior:smooth;color-scheme:dark}
+    html{scroll-behavior:smooth;color-scheme:light}
     body{
       margin:0;background:
         radial-gradient(1100px 520px at 88% -180px, rgba(240,179,197,.18), transparent 62%),
         radial-gradient(1300px 560px at 26% -260px, rgba(140,203,171,.16), transparent 70%),
-        linear-gradient(180deg, #313a33 0%, #272f2a 55%, #222924 100%);
+        linear-gradient(180deg,#fdfbf5 0%,#f9f5ea 55%,#f4efe1 100%);
       color:var(--ink);font-size:16.5px;line-height:1.8;font-family:var(--sans);
       -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
     }
@@ -69,7 +71,7 @@
       width:32px;height:32px;border-radius:11px;display:grid;place-items:center;
       background:linear-gradient(160deg,var(--sakura),var(--brand));color:var(--on-sakura);
       font-family:var(--serif);font-size:16px;font-weight:700;
-      box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sakura) 50%,#000),0 4px 14px rgba(0,0,0,.35);
+      box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sakura) 55%,#8a6470),0 4px 14px rgba(90,72,48,.16);
     }
     nav{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
     nav a{
@@ -108,7 +110,7 @@
       background:linear-gradient(165deg,color-mix(in srgb,var(--sakura) 13%,var(--card)),var(--card) 58%);
       border:1px solid color-mix(in srgb,var(--sakura) 32%,var(--rule));
       border-radius:26px;padding:28px 30px;
-      box-shadow:0 22px 48px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.06);
+      box-shadow:0 18px 40px rgba(90,72,48,.12),inset 0 1px 0 rgba(255,255,255,.75);
     }
     .hero-side::after{
       content:"";position:absolute;inset:8px;border-radius:20px;pointer-events:none;
@@ -314,7 +316,7 @@
     .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
     .tile{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:22px;background:var(--card);overflow:hidden;color:var(--ink);box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.045);transition:border-color .25s,transform .25s,box-shadow .25s}
     .tile:hover{border-color:var(--sakura);--ty:-4px;box-shadow:0 18px 38px color-mix(in srgb,var(--sakura) 18%,transparent),inset 0 1px 0 rgba(255,255,255,.06);text-decoration:none}
-    .tile .thumb{height:132px;display:grid;place-items:center;font-size:34px;color:var(--paper);background:linear-gradient(135deg,var(--brand),#4c8f72)}
+    .tile .thumb{height:132px;display:grid;place-items:center;font-size:34px;color:var(--on-sakura);background:linear-gradient(135deg,var(--brand),#4c8f72)}
     .tile .thumb.t2{background:linear-gradient(135deg,#b4566c,#8c3d50)}
     .tile .thumb.t3{background:linear-gradient(135deg,#2f7d5f,#1f5c46)}
     .tile .thumb.t5{background:linear-gradient(135deg,#6b4f9e,#4a3570)}
@@ -368,7 +370,7 @@
 
     /* ---------------- 季节装饰：冬季落雪 ---------------- */
     .snow{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-    .flake{position:absolute;top:-10vh;color:var(--ink);opacity:.25;animation:snowfall linear infinite;user-select:none}
+    .flake{position:absolute;top:-10vh;color:var(--sakura);opacity:.4;animation:snowfall linear infinite;user-select:none}
     @keyframes snowfall{
       0%{transform:translate3d(0,-10vh,0) rotate(0deg)}
       100%{transform:translate3d(4vw,110vh,0) rotate(360deg)}
@@ -436,7 +438,7 @@
     .dropdown{
       position:absolute;left:50%;top:calc(100% + 4px);transform:translate(-50%,4px);
       min-width:160px;padding:7px;background:var(--card);border:1px solid var(--rule);
-      border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.55);
+      border-radius:16px;box-shadow:0 18px 40px rgba(90,72,48,.16);
       opacity:0;visibility:hidden;transition:opacity .18s,transform .18s,visibility .18s;z-index:70;
     }
     .nav-item:hover>.dropdown,.nav-item:focus-within>.dropdown{opacity:1;visibility:visible;transform:translate(-50%,0)}
@@ -548,7 +550,7 @@
       background:linear-gradient(165deg,rgba(240,179,197,.16),var(--glass-bg) 58%);
     }
     .masthead{
-      background:rgba(43,51,45,.62);
+      background:rgba(251,248,240,.72);
       -webkit-backdrop-filter:blur(18px) saturate(1.25);
       backdrop-filter:blur(18px) saturate(1.25);
       border-bottom:1px solid var(--glass-border);
@@ -561,8 +563,14 @@
     }
     .tabs{border-color:var(--glass-border)}
     .chapter:hover,.tile:hover,.entry:hover,.faq-item[open],.sheet{
-      background:rgba(255,255,255,.085);
+      background:rgba(255,255,255,.74);
     }
+
+    /* ---------------- 浅色主题文字强调 ---------------- */
+    .hero-ed h1 em,.hero-side .label,.hero-side a:hover,.faq-item summary::after,
+    nav a.active,.tab.active,.btn.ghost,.chapter .count,.chapter .num{color:var(--accent-ink)}
+    .chapter .num{border-color:color-mix(in srgb,var(--accent-ink) 35%,transparent)}
+    .tag::before{opacity:.65}
 
     /* ---------------- 常见问题 ---------------- */
     .faq-sec{margin-top:52px}
@@ -817,7 +825,8 @@
       window.addEventListener('mouseleave', function () { mouseActive = false; });
 
       try {
-        var c = getComputedStyle(document.body).getPropertyValue('--sakura').trim();
+        var bc = getComputedStyle(document.body);
+        var c = bc.getPropertyValue('--dot-color').trim() || bc.getPropertyValue('--sakura').trim();
         if (c) dotColor = c;
       } catch (err) { /* 忽略取色失败 */ }
 
