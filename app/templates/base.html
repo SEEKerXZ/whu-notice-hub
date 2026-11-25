@@ -227,10 +227,14 @@
     }
     .btn:active{transform:translateY(1px)}
     .btn.ghost{
-      background:var(--card);color:var(--ink-2);border:1px solid var(--rule);
-      box-shadow:0 2px 0 rgba(27,31,26,.03);
+      background:color-mix(in srgb,var(--sakura) 16%,var(--card));
+      color:var(--sakura);border:1px solid color-mix(in srgb,var(--sakura) 45%,var(--rule));
+      box-shadow:none;
     }
-    .btn.ghost:hover{border-color:var(--sakura);color:var(--sakura);background:var(--card);box-shadow:0 10px 24px color-mix(in srgb,var(--sakura) 16%,transparent)}
+    .btn.ghost:hover{
+      background:color-mix(in srgb,var(--sakura) 26%,var(--card));border-color:var(--sakura);
+      color:var(--sakura);box-shadow:0 10px 24px color-mix(in srgb,var(--sakura) 18%,transparent);
+    }
     .pn{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:28px}
     .pn a,.pn span{display:block;padding:14px 16px;border:1px solid var(--rule);border-radius:16px;font-size:13px;color:var(--ink-2);background:var(--card)}
     .pn a:hover{border-color:var(--brand);text-decoration:none;color:var(--brand)}
@@ -373,9 +377,9 @@
     .chapter::before,.tile::before{
       content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
       background:radial-gradient(circle at var(--mx,50%) var(--my,50%),
-        color-mix(in srgb,var(--sakura) 26%,transparent) 0%,
-        color-mix(in srgb,var(--sakura) 12%,transparent) 42%,
-        transparent 68%);
+        color-mix(in srgb,var(--sakura) 48%,transparent) 0%,
+        color-mix(in srgb,var(--sakura) 26%,transparent) 40%,
+        transparent 72%);
       transform:scale(0);transform-origin:var(--mx,50%) var(--my,50%);
       opacity:0;transition:transform .5s cubic-bezier(.22,.61,.36,1),opacity .3s;
     }
@@ -427,6 +431,34 @@
       .chapter,.tile{transform:none !important}
       .cursor-dot,.cursor-ring{display:none !important}
     }
+
+    /* ---------------- 按钮式链接（覆盖层） ---------------- */
+    a.tag,.entry .meta a,.crumbs a,footer a,.sec-head .more a,.pager a,.pn a,
+    .related li a,.mini a,.dropdown a,.sheet .top a{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 13px;border-radius:999px;border:1px solid var(--rule);
+      background:var(--card);color:var(--ink-2);font-size:12.5px;line-height:1.7;
+      transition:background .2s,border-color .2s,color .2s,transform .2s,box-shadow .2s;
+    }
+    a.tag::before{display:none}
+    a.tag:hover,.entry .meta a:hover,.crumbs a:hover,footer a:hover,.sec-head .more a:hover,
+    .pager a:hover,.pn a:hover,.related li a:hover,.mini a:hover,.dropdown a:hover,.sheet .top a:hover{
+      border-color:var(--sakura);background:var(--sakura-soft);color:var(--sakura);
+      text-decoration:none;transform:translateY(-1px);
+      box-shadow:0 8px 18px color-mix(in srgb,var(--sakura) 14%,transparent);
+    }
+    /* 导航也做成按钮胶囊，悬停/激活时填充颜色 */
+    nav a{
+      display:inline-flex;align-items:center;padding:5px 13px;border-radius:999px;
+      border:1px solid transparent;background:transparent;color:var(--muted);
+    }
+    nav a:hover{border-color:var(--rule);background:var(--sakura-soft);color:var(--sakura)}
+    nav a.active{background:var(--sakura-soft);border-color:color-mix(in srgb,var(--sakura) 42%,var(--rule));color:var(--sakura)}
+    /* 通知标题：悬停时也像按钮一样铺一层色 */
+    .entry h3 a{display:inline;border-radius:8px;padding:1px 5px;margin:0 -5px;transition:background .2s,color .2s}
+    .entry h3 a:hover{background:color-mix(in srgb,var(--sakura) 18%,transparent);color:var(--ink);text-decoration:none}
+    /* 卡片悬停再压一层底色 */
+    .chapter:hover,.tile:hover{background:color-mix(in srgb,var(--sakura) 7%,var(--card))}
 
     @media (max-width:900px){
       .hero-ed{grid-template-columns:1fr;gap:22px}
