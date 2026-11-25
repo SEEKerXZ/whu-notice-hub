@@ -459,11 +459,7 @@
     @media (hover:none),(pointer:coarse){.cursor-dot,.cursor-ring{display:none}}
 
     nav a{position:relative}
-    nav a::after{
-      content:"";position:absolute;left:11px;right:11px;bottom:4px;height:1.5px;background:var(--sakura);
-      transform:scaleX(0);transform-origin:right;transition:transform .28s cubic-bezier(.22,.61,.36,1);
-    }
-    nav a:hover::after,nav a.active::after{transform:scaleX(1);transform-origin:left}
+    nav a::after{content:none}
 
     .nav-item{position:relative;display:flex}
     .dropdown{
