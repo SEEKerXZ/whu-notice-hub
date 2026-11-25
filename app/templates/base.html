@@ -736,11 +736,26 @@
     /* ---------------- 点击卡片：铺满全屏后跳转 ---------------- */
     .page-expand{
       position:fixed;z-index:9990;pointer-events:none;overflow:hidden;
+      background:linear-gradient(150deg,
+        color-mix(in srgb,var(--expand-tint,#f0b3c5) 46%,transparent) 0%,
+        rgba(255,255,255,.20) 52%,
+        rgba(255,255,255,.38) 100%);
+      border:1px solid rgba(255,255,255,.78);
+      -webkit-backdrop-filter:blur(10px) saturate(1.35);
+      backdrop-filter:blur(10px) saturate(1.35);
+      box-shadow:0 30px 90px rgba(60,45,30,.18),
+                 inset 0 1px 0 rgba(255,255,255,.95),
+                 inset 0 -1px 0 rgba(255,255,255,.4);
       transition:left .62s cubic-bezier(.7,0,.2,1),top .62s cubic-bezier(.7,0,.2,1),
                  width .62s cubic-bezier(.7,0,.2,1),height .62s cubic-bezier(.7,0,.2,1),
                  border-radius .62s cubic-bezier(.7,0,.2,1);
-      box-shadow:0 30px 90px rgba(60,45,30,.25);
     }
+    .page-expand::after{
+      content:"";position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(115deg,rgba(255,255,255,.45) 0%,transparent 24%,transparent 76%,rgba(255,255,255,.28) 100%);
+      opacity:.7;transition:opacity .5s ease;
+    }
+    .page-expand.expanded::after{opacity:.45}
     .page-expand.expanded{
       left:0 !important;top:0 !important;width:100vw !important;height:100vh !important;
       border-radius:0 !important;
@@ -1155,7 +1170,7 @@
       ov.style.width = r.width + 'px';
       ov.style.height = r.height + 'px';
       ov.style.borderRadius = cs.borderRadius || '20px';
-      ov.style.background = 'linear-gradient(150deg,' + color + ' 0%,rgba(255,255,255,.96) 78%)';
+      ov.style.setProperty('--expand-tint', color || '#f0b3c5');
       document.body.appendChild(ov);
       requestAnimationFrame(function () {
         requestAnimationFrame(function () { ov.classList.add('expanded'); });
