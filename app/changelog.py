@@ -2,6 +2,17 @@
 
 CHANGELOG = [
     {
+        "version": "v2.6.19",
+        "date": "2026-11-25",
+        "title": "服务器链路优化",
+        "items": [
+            "HTML 页面启用 gzip 压缩：首页 87KB → 21KB（约缩减 76%）",
+            "增加 ETag 协商缓存：刷新时内容未变直接返回 304，实测 5ms，不再重复下载整页",
+            "uvicorn 改为 2 个 worker，keep-alive 由 5s 延长到 65s，减少重复建连",
+            "响应带 Cache-Control: no-cache 与 Vary: Accept-Encoding，保证缓存判断正确",
+        ],
+    },
+    {
         "version": "v2.6.18",
         "date": "2026-11-25",
         "title": "鼠标指针跟手",

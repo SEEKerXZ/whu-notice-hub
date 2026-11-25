@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import base64
+import gzip
+import hashlib
 import json
 import os
 import time
@@ -108,6 +110,35 @@ _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
 # ---------------------------------------------------------------------------
 # 中间件
 # ---------------------------------------------------------------------------
+@app.middleware("http")
+async def etag_gzip(request: Request, call_next):
+    """HTML 页面：gzip 压缩 + ETag 协商缓存（未变化时返回 304，刷新更快）。"""
+    response = await call_next(request)
+    ctype = response.headers.get("content-type", "")
+    if request.method != "GET" or not ctype.startswith("text/html"):
+        return response
+    if not hasattr(response, "body_iterator"):
+        return response
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk if isinstance(chunk, bytes) else str(chunk).encode("utf-8")
+    digest = hashlib.md5(body).hexdigest()
+    etag_val = '"' + digest + '"'
+    headers = {
+        "ETag": etag_val,
+        "Cache-Control": "no-cache",
+        "Vary": "Accept-Encoding",
+    }
+    if request.headers.get("if-none-match") == etag_val:
+        return Response(status_code=304, headers=headers)
+    accept = request.headers.get("accept-encoding", "")
+    if "gzip" in accept and len(body) > 1024:
+        body = gzip.compress(body, compresslevel=6)
+        headers["Content-Encoding"] = "gzip"
+    return Response(content=body, status_code=response.status_code,
+                    headers=headers, media_type="text/html; charset=utf-8")
+
+
 @app.middleware("http")
 async def rate_limit(request: Request, call_next):
     """轻量限流：每个 IP 每分钟最多 N 次，防止公开后被刷。"""
