@@ -16,7 +16,7 @@
       --glass-border:rgba(35,40,31,.12);
       --on-sakura:#2a141d;
       --accent-ink:#b4566c;
-      --dot-color:#b4566c;
+      --dot-color:#d99aaa;
       --pink:#b4566c; --pink-soft:rgba(180,86,108,.14);
       --gold:#8a6414; --gold-soft:rgba(154,107,31,.16);
       --blue:#2b5f8a; --blue-soft:rgba(43,95,138,.12);
@@ -27,10 +27,10 @@
       --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
     }
     /* 四个板块的代表色：进入对应页面时整站主色随之切换 */
-    body.page-notices{--sakura:#f0b3c5;--sakura-2:#f7c9d6;--sakura-soft:rgba(240,179,197,.22);--on-sakura:#2a141d;--accent-ink:#b4566c;--dot-color:#b4566c}
-    body.page-videos{--sakura:#ffa95c;--sakura-2:#ffc287;--sakura-soft:rgba(255,169,92,.22);--on-sakura:#2a1706;--accent-ink:#b35f17;--dot-color:#c96a1e}
-    body.page-projects{--sakura:#bda6ef;--sakura-2:#d2c1f7;--sakura-soft:rgba(189,166,239,.22);--on-sakura:#1c142e;--accent-ink:#6d50b8;--dot-color:#7a5cc0}
-    body.page-tools{--sakura:#79d9c6;--sakura-2:#9be8d8;--sakura-soft:rgba(121,217,198,.22);--on-sakura:#0e2520;--accent-ink:#1f8574;--dot-color:#1f8574}
+    body.page-notices{--sakura:#f0b3c5;--sakura-2:#f7c9d6;--sakura-soft:rgba(240,179,197,.22);--on-sakura:#2a141d;--accent-ink:#b4566c;--dot-color:#e2b3c0}
+    body.page-videos{--sakura:#ffa95c;--sakura-2:#ffc287;--sakura-soft:rgba(255,169,92,.22);--on-sakura:#2a1706;--accent-ink:#b35f17;--dot-color:#e8bb92}
+    body.page-projects{--sakura:#bda6ef;--sakura-2:#d2c1f7;--sakura-soft:rgba(189,166,239,.22);--on-sakura:#1c142e;--accent-ink:#6d50b8;--dot-color:#c2b2e8}
+    body.page-tools{--sakura:#79d9c6;--sakura-2:#9be8d8;--sakura-soft:rgba(121,217,198,.22);--on-sakura:#0e2520;--accent-ink:#1f8574;--dot-color:#a8ded5}
     /* 二级页卡片缩略图跟随页面主色 */
     .tile .thumb,.tile .thumb.t2,.tile .thumb.t3,.tile .thumb.t5{
       background:linear-gradient(135deg,var(--sakura-2),var(--sakura));
@@ -967,10 +967,10 @@
               ry += ddy / dr * push;
               boost += band * (strong ? 0.95 : 0.55) * decay;
             }
-            var r = 1.2 + near * 2.6 + boost * 1.6;
-            var base = near * 0.95 + boost;
+            var r = 1.0 + near * 2.0 + boost * 1.2;
+            var base = near * 0.52 + boost * 0.7;
             var tw = 0.86 + 0.14 * Math.sin(tick * 2 + (x + y) * 0.015);
-            ctx.globalAlpha = Math.min(0.97, base * tw);
+            ctx.globalAlpha = Math.min(0.42, base * tw);
             ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
           }
         }
