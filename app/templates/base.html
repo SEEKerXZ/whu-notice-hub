@@ -444,17 +444,6 @@
       transform:scale(0);opacity:.75;animation:ripple .62s ease-out forwards;
     }
     @keyframes ripple{to{transform:scale(1);opacity:0}}
-    /* 空白处点击：页面级扩散涟漪 */
-    .page-ripple{
-      position:fixed;width:280px;height:280px;border-radius:50%;pointer-events:none;z-index:9997;
-      transform:translate(-50%,-50%) scale(.12);
-      background:radial-gradient(circle,color-mix(in srgb,var(--sakura) 26%,transparent) 0%,transparent 68%);
-      border:1.5px solid color-mix(in srgb,var(--sakura) 42%,transparent);
-      animation:pageRipple .72s cubic-bezier(.22,.61,.36,1) forwards;
-    }
-    @keyframes pageRipple{
-      to{transform:translate(-50%,-50%) scale(1);opacity:0}
-    }
 
     /* 磁吸按钮 */
     .btn,.search button,.filters .btn{transition:transform .2s cubic-bezier(.22,.61,.36,1),background .2s,border-color .2s,box-shadow .2s}
@@ -634,6 +623,8 @@
     var mqFine = window.matchMedia ? window.matchMedia('(hover:hover) and (pointer:fine)') : null;
     var reduce = mqReduce && mqReduce.matches;
     var fine = mqFine && mqFine.matches;
+    var dotRipples = [];
+    var lastMoveX = 0, lastMoveY = 0, lastMoveT = 0;
 
     /* ---------- 自定义光标：小点 + 跟随圆圈 ---------- */
     if (fine && !reduce) {
@@ -707,6 +698,14 @@
         mouseActive = true;
         tmx = e.clientX / Math.max(VW, 1);
         tmy = e.clientY / Math.max(VH, 1);
+        if (reduce) return;
+        var now = performance.now();
+        var dx = e.clientX - lastMoveX, dy = e.clientY - lastMoveY;
+        if (now - lastMoveT < 90) return;
+        if (dx * dx + dy * dy < 2500) return;
+        lastMoveX = e.clientX; lastMoveY = e.clientY; lastMoveT = now;
+        dotRipples.push({ x: e.clientX, y: e.clientY, t: now, power: 0.9 });
+        if (dotRipples.length > 8) dotRipples.shift();
       });
       window.addEventListener('mouseleave', function () { mouseActive = false; });
 
@@ -722,6 +721,10 @@
         var ox = (smx - 0.5) * 44;
         var oy = (smy - 0.5) * 30;
         var focusX = smx * VW, focusY = smy * VH;
+        var now = performance.now();
+        for (var k = dotRipples.length - 1; k >= 0; k--) {
+          if (now - dotRipples[k].t > 1200) dotRipples.splice(k, 1);
+        }
         ctx.clearRect(0, 0, VW, VH);
         if (!mouseActive) { raf = document.hidden ? null : requestAnimationFrame(drawDots); return; }
         ctx.fillStyle = dotColor;
@@ -734,11 +737,28 @@
             var near = 1 - d / 300;
             if (near <= 0) continue;
             near = Math.pow(near, 1.15);
-            var r = 1.2 + near * 2.6;
-            var base = near * 0.95;
+            var rx = bx, ry = by, boost = 0;
+            for (var k2 = 0; k2 < dotRipples.length; k2++) {
+              var rp = dotRipples[k2];
+              var age = (now - rp.t) / 1000;
+              var strong = rp.power > 1;
+              var crest = age * (strong ? 470 : 380);
+              var ddx = bx - rp.x, ddy = by - rp.y;
+              var dr = Math.sqrt(ddx * ddx + ddy * ddy);
+              if (dr < 0.5) continue;
+              var band = 1 - Math.abs(dr - crest) / (strong ? 96 : 66);
+              if (band <= 0) continue;
+              var decay = Math.exp(-age * 1.6);
+              var push = band * (strong ? 17 : 8) * decay;
+              rx += ddx / dr * push;
+              ry += ddy / dr * push;
+              boost += band * (strong ? 0.95 : 0.55) * decay;
+            }
+            var r = 1.2 + near * 2.6 + boost * 1.6;
+            var base = near * 0.95 + boost;
             var tw = 0.86 + 0.14 * Math.sin(tick * 2 + (x + y) * 0.015);
             ctx.globalAlpha = Math.min(0.97, base * tw);
-            ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
           }
         }
         ctx.globalAlpha = 1;
@@ -837,19 +857,13 @@
       setTimeout(function () { p.classList.remove('is-entering'); }, 520);
     });
 
-    /* ---------- 点击涟漪：按钮/卡片内是小涟漪，空白处是页面大涟漪 ---------- */
+    /* ---------- 点击涟漪：背景点阵激起一圈大波；按钮/卡片内保留小涟漪 ---------- */
     document.addEventListener('pointerdown', function (e) {
       if (reduce) return;
+      dotRipples.push({ x: e.clientX, y: e.clientY, t: performance.now(), power: 1.9 });
+      if (dotRipples.length > 8) dotRipples.shift();
       var el = e.target.closest ? e.target.closest('a, button, .btn, .chapter, .tile') : null;
-      if (!el) {
-        var pg = document.createElement('span');
-        pg.className = 'page-ripple';
-        pg.style.left = e.clientX + 'px';
-        pg.style.top = e.clientY + 'px';
-        document.body.appendChild(pg);
-        pg.addEventListener('animationend', function () { pg.remove(); });
-        return;
-      }
+      if (!el) return;
       var r = el.getBoundingClientRect();
       if (!r.width) return;
       var size = Math.max(r.width, r.height) * 2;
