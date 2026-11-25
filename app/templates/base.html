@@ -869,7 +869,7 @@
         if (y >= max) { y = max; scrollVel = 0; }
         document.documentElement.style.scrollBehavior = 'auto';
         window.scrollTo({ top: y, behavior: 'auto' });
-        scrollVel *= Math.pow(0.9, dt / 16.7);
+        scrollVel *= Math.pow(0.82, dt / 16.7);
         if (Math.abs(scrollVel) > 0.35) {
           scrollRaf = requestAnimationFrame(scrollStep);
         } else {
@@ -883,8 +883,8 @@
         if (Math.abs(e.deltaY) < 6) return;
         e.preventDefault();
         /* 速度与滚轮力度/频率成正比：滚得越快、越用力，页面滚得越快 */
-        scrollVel += e.deltaY * 1.15;
-        var limit = 90;
+        scrollVel += e.deltaY * 0.72;
+        var limit = 52;
         if (scrollVel > limit) scrollVel = limit;
         if (scrollVel < -limit) scrollVel = -limit;
         if (!scrollRaf) {
