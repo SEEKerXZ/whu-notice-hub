@@ -731,33 +731,7 @@
       opacity:.55;
     }
 
-    /* ---------------- 液态光斑：鼠标附近凸起的玻璃 ---------------- */
-    .liquid-glow{
-      position:absolute;left:var(--mx,50%);top:var(--my,50%);
-      width:220px;height:220px;margin:-110px 0 0 -110px;pointer-events:none;z-index:0;
-      border-radius:46% 54% 52% 48% / 52% 46% 54% 48%;
-      background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.95),rgba(255,255,255,.40) 46%,rgba(255,255,255,0) 72%);
-      filter:blur(10px) saturate(1.25);
-      mix-blend-mode:soft-light;
-      opacity:0;transform:scale(.35);
-      transition:opacity .35s ease,transform .55s cubic-bezier(.22,.61,.36,1);
-      animation:gooWobble 7s ease-in-out infinite;
-    }
-    .chapter:hover>.liquid-glow,.tile:hover>.liquid-glow,.entry:hover>.liquid-glow,
-    .hero-side:hover>.liquid-glow,.faq-item:hover>.liquid-glow{
-      opacity:1;transform:scale(1);
-    }
-    .chapter>.liquid-glow,.tile>.liquid-glow,.entry>.liquid-glow,
-    .hero-side>.liquid-glow,.faq-item>.liquid-glow{position:absolute;z-index:0}
-    .hero-side .hs-head,.hero-side .hs-stats,.hero-side .hs-note,
-    .faq-item>summary,.faq-item>.faq-a{position:relative;z-index:1}
-    @keyframes gooWobble{
-      0%,100%{border-radius:46% 54% 52% 48% / 52% 46% 54% 48%}
-      33%{border-radius:56% 44% 46% 54% / 44% 56% 48% 52%}
-      66%{border-radius:48% 52% 56% 44% / 54% 48% 52% 46%}
-    }
-    .faq-item{position:relative;overflow:hidden}
-    @media (prefers-reduced-motion: reduce){.liquid-glow{display:none}}
+    .faq-item{position:relative}
 
   </style>
 </head>
@@ -996,12 +970,6 @@
             el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
             el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
           };
-          if (!el.querySelector(':scope > .liquid-glow')) {
-            var glow = document.createElement('span');
-            glow.className = 'liquid-glow';
-            glow.setAttribute('aria-hidden', 'true');
-            el.appendChild(glow);
-          }
           el.addEventListener('pointerenter', setOrigin);
           el.addEventListener('mousemove', function (e) {
             setOrigin(e);
