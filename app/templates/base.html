@@ -1047,6 +1047,39 @@
       .chapters{grid-template-columns:repeat(2,1fr)}
     }
 
+    /* ---------------- 大版本更新弹窗 ---------------- */
+    .update-modal{position:fixed;inset:0;z-index:9995;display:flex;align-items:center;justify-content:center;padding:24px}
+    .update-modal[hidden]{display:none}
+    .um-backdrop{position:absolute;inset:0;background:rgba(60,45,30,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:umFade .3s ease both}
+    .um-card{
+      position:relative;width:min(580px,100%);max-height:80vh;overflow:auto;
+      padding:30px 32px 26px;border-radius:26px;
+      background:linear-gradient(150deg,rgba(255,255,255,.94),rgba(255,255,255,.80));
+      border:1px solid rgba(255,255,255,.96);
+      box-shadow:0 40px 100px rgba(60,45,30,.35),inset 0 1px 0 #fff;
+      animation:umPop .38s cubic-bezier(.22,.61,.36,1) both;
+    }
+    .um-close{
+      position:absolute;right:14px;top:12px;width:36px;height:36px;border-radius:50%;
+      border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.6);
+      color:var(--ink-2);font-size:20px;line-height:1;cursor:pointer;
+      transition:color .2s,border-color .2s,transform .2s;
+    }
+    .um-close:hover{color:var(--accent-ink);border-color:var(--accent-ink);transform:rotate(90deg)}
+    .um-card h2{font-size:26px;margin:4px 0 4px;font-weight:700}
+    .um-sub{color:var(--muted);font-size:15px;margin:0 0 14px}
+    .um-list{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:46vh}
+    .um-list li{font-size:15px;line-height:1.7;color:var(--ink-2)}
+    .um-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+    @keyframes umFade{from{opacity:0}to{opacity:1}}
+    @keyframes umPop{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+    @media (max-width:640px){
+      .um-card{padding:22px 18px;border-radius:22px;max-height:84vh}
+      .um-card h2{font-size:22px}
+      .um-list li{font-size:14px}
+      .um-sub{font-size:13.5px}
+    }
+
   </style>
 </head>
 <body class="{% if request.url.path.startswith('/videos') %}page-videos{% elif request.url.path.startswith('/projects') %}page-projects{% elif request.url.path.startswith('/tools') %}page-tools{% elif request.url.path == '/' %}page-home{% else %}page-notices{% endif %}">
@@ -1562,6 +1595,56 @@
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { hide(); input.blur(); }
+    });
+  })();
+</script>
+<div class="update-modal" id="updateModal" data-version="{{ latest_version }}" hidden>
+  <div class="um-backdrop"></div>
+  <div class="um-card" role="dialog" aria-modal="true" aria-label="更新内容">
+    <button class="um-close" type="button" aria-label="关闭">×</button>
+    <div class="kicker">What's New · 大版本更新</div>
+    <h2>版本 {{ latest_version }}</h2>
+    <p class="um-sub">这次是整站视觉与交互的大版本重做，欢迎体验：</p>
+    <ul class="um-list">
+      {% for item in update_notes %}<li>{{ item }}</li>{% endfor %}
+    </ul>
+    <div class="um-actions">
+      <a class="btn" href="/changelog">查看完整更新日志</a>
+      <button class="btn ghost" type="button" id="updateClose">开始浏览</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var modal = document.getElementById('updateModal');
+    if (!modal) return;
+    var VER = modal.getAttribute('data-version') || 'v2.0.0';
+    var KEY = 'wave_seen_version';
+    var seen = null;
+    try { seen = localStorage.getItem(KEY); } catch (e) {}
+    if (seen === VER) { modal.remove(); return; }
+    var opened = false;
+    var open = function () {
+      if (opened) return;
+      opened = true;
+      modal.hidden = false;
+      document.body.style.overflow = 'hidden';
+    };
+    var close = function () {
+      modal.hidden = true;
+      document.body.style.overflow = '';
+      try { localStorage.setItem(KEY, VER); } catch (e) {}
+    };
+    setTimeout(open, 700);
+    var btn = modal.querySelector('.um-close');
+    if (btn) btn.addEventListener('click', close);
+    var start = document.getElementById('updateClose');
+    if (start) start.addEventListener('click', close);
+    var back = modal.querySelector('.um-backdrop');
+    if (back) back.addEventListener('click', close);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.hidden) close();
     });
   })();
 </script>

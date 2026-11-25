@@ -156,7 +156,16 @@ def test_changelog_page(client):
     resp = client.get("/changelog")
     assert resp.status_code == 200
     assert "更新日志" in resp.text
+    assert "v2.0.0" in resp.text
+    assert "大版本" in resp.text
     assert "v1.0.0" in resp.text
+
+
+def test_update_modal_present(client):
+    html = client.get("/").text
+    assert 'id="updateModal"' in html
+    assert "版本 v2.0.0" in html
+    assert "整站视觉与交互" in html
 
 
 def test_search_redirect(client):

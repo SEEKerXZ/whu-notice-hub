@@ -97,6 +97,10 @@ def _tag_class(value: object) -> str:
 
 templates.env.filters["tag_class"] = _tag_class
 
+from .changelog import CHANGELOG as _CHANGELOG  # noqa: E402
+templates.env.globals["latest_version"] = _CHANGELOG[0]["version"]
+templates.env.globals["update_notes"] = _CHANGELOG[0]["changes"]
+
 app = FastAPI(title="修远Eker的Wave", version="0.1.0",
               description="武汉大学本科生通知聚合 · 公开只读服务")
 
