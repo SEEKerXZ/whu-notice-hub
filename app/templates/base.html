@@ -1536,6 +1536,15 @@
       });
       setTimeout(go, 950);
     }, true);
+
+    var cleanup = function () {
+      var leftovers = document.querySelectorAll('.page-expand');
+      for (var i = 0; i < leftovers.length; i++) leftovers[i].remove();
+      document.body.style.overflow = '';
+      expanding = false;
+    };
+    window.addEventListener('pageshow', cleanup);
+    window.addEventListener('pagehide', cleanup);
   })();
 </script>
 <script>
@@ -1646,6 +1655,15 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && !modal.hidden) close();
     });
+    var tidy = function () {
+      if (modal && modal.parentNode) {
+        modal.hidden = true;
+        document.body.style.overflow = '';
+        try { localStorage.setItem(KEY, VER); } catch (e) {}
+      }
+    };
+    window.addEventListener('pageshow', function () { if (!modal.hidden) tidy(); });
+    window.addEventListener('pagehide', tidy);
   })();
 </script>
 </body>
