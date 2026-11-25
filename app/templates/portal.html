@@ -13,15 +13,18 @@
     <div class="date-line">今日新增 {{ overview.today_new }} 条 · 7 天内截止 {{ overview.upcoming }} 条 · 共 {{ total }} 条</div>
   </div>
   <aside class="hero-side">
-    <div class="label">本期速览</div>
-    <dl>
-      <dt>累计通知</dt><dd>{{ total }}</dd>
-      <dt>今日新增</dt><dd>{{ overview.today_new }}</dd>
-      <dt>7 天内截止</dt><dd><a href="/notices?deadline=1">{{ overview.upcoming }}</a></dd>
-      <dt>视频推荐</dt><dd>{{ videos|length }}</dd>
-      <dt>项目分享</dt><dd>{{ projects|length }}</dd>
-      <dt>便捷工具</dt><dd>{{ tools|length }}</dd>
-    </dl>
+    <div class="hs-head">
+      <div class="label">本期速览</div>
+      <span class="hs-badge">LIVE</span>
+    </div>
+    <div class="hs-stats">
+      <div class="hs-row"><span class="hs-k">累计通知</span><span class="hs-v">{{ total }}</span></div>
+      <div class="hs-row hot"><span class="hs-k">今日新增</span><span class="hs-v">{{ overview.today_new }}</span></div>
+      <div class="hs-row"><span class="hs-k">7 天内截止</span><span class="hs-v"><a href="/notices?deadline=1">{{ overview.upcoming }}</a></span></div>
+      <div class="hs-row"><span class="hs-k">视频推荐</span><span class="hs-v">{{ videos|length }}<small>个</small></span></div>
+      <div class="hs-row"><span class="hs-k">项目分享</span><span class="hs-v">{{ projects|length }}<small>个</small></span></div>
+      <div class="hs-row"><span class="hs-k">便捷工具</span><span class="hs-v">{{ tools|length }}<small>个</small></span></div>
+    </div>
     <div class="hs-note">数据每 60 分钟自动更新 · 只收录本科生相关</div>
   </aside>
 </section>
