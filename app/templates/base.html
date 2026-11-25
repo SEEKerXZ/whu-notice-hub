@@ -856,37 +856,42 @@
       });
     }
 
-    /* ---------- 平滑滚动（鼠标滚轮缓动；触控板保持原生） ---------- */
+    /* ---------- 平滑滚动：滚动速度跟随滚轮力度（滚得快页面动得快） ---------- */
     if (!reduce) {
-      var targetY = window.scrollY, scrollRaf = null, scrollAnimating = false;
-      var maxScroll = function () {
-        return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      };
-      var scrollStep = function () {
-        targetY = Math.max(0, Math.min(maxScroll(), targetY));
-        var diff = targetY - window.scrollY;
-        if (Math.abs(diff) < 0.6) {
-          window.scrollTo(0, targetY);
-          scrollAnimating = false;
+      var scrollVel = 0, scrollRaf = null, lastFrame = 0;
+      var scrollStep = function (ts) {
+        if (!lastFrame) lastFrame = ts;
+        var dt = Math.min(48, ts - lastFrame);
+        lastFrame = ts;
+        var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        var y = window.scrollY + scrollVel * (dt / 16.7);
+        if (y <= 0) { y = 0; scrollVel = 0; }
+        if (y >= max) { y = max; scrollVel = 0; }
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo({ top: y, behavior: 'auto' });
+        scrollVel *= Math.pow(0.9, dt / 16.7);
+        if (Math.abs(scrollVel) > 0.35) {
+          scrollRaf = requestAnimationFrame(scrollStep);
+        } else {
           scrollRaf = null;
-          return;
+          lastFrame = 0;
+          document.documentElement.style.scrollBehavior = '';
         }
-        window.scrollTo(0, window.scrollY + diff * 0.18);
-        scrollRaf = requestAnimationFrame(scrollStep);
       };
       window.addEventListener('wheel', function (e) {
         if (e.ctrlKey || e.shiftKey || e.deltaMode !== 0) return;
-        if (Math.abs(e.deltaY) < 30) return;
+        if (Math.abs(e.deltaY) < 6) return;
         e.preventDefault();
-        targetY = (scrollAnimating ? targetY : window.scrollY) + e.deltaY;
-        if (!scrollAnimating) {
-          scrollAnimating = true;
+        /* 速度与滚轮力度/频率成正比：滚得越快、越用力，页面滚得越快 */
+        scrollVel += e.deltaY * 1.15;
+        var limit = 90;
+        if (scrollVel > limit) scrollVel = limit;
+        if (scrollVel < -limit) scrollVel = -limit;
+        if (!scrollRaf) {
+          lastFrame = 0;
           scrollRaf = requestAnimationFrame(scrollStep);
         }
       }, { passive: false });
-      window.addEventListener('scroll', function () {
-        if (!scrollAnimating) targetY = window.scrollY;
-      });
     }
 
     /* ---------- 标签切换 ---------- */
