@@ -483,7 +483,7 @@
       transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translate3d(var(--mgx,0px),calc(var(--ty,0px) + var(--mgy,0px)),0);
       transition:transform .22s cubic-bezier(.22,.61,.36,1),background .25s,border-color .25s,box-shadow .25s;
     }
-    .chapter::before,.tile::before,.entry::before{
+    .chapter::before,.tile::before,.entry::before,.faq-item::before{
       content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
       background:radial-gradient(circle at var(--mx,50%) var(--my,50%),
         color-mix(in srgb,var(--sec,var(--sakura)) 52%,transparent) 0%,
@@ -492,8 +492,8 @@
       transform:scale(0);transform-origin:var(--mx,50%) var(--my,50%);
       opacity:0;transition:transform .5s cubic-bezier(.22,.61,.36,1),opacity .3s;
     }
-    .chapter:hover::before,.tile:hover::before,.entry:hover::before{transform:scale(2.1);opacity:1}
-    .chapter>*,.tile>*,.entry>*{position:relative;z-index:1}
+    .chapter:hover::before,.tile:hover::before,.entry:hover::before,.faq-item:hover::before{transform:scale(2.1);opacity:1}
+    .chapter>*,.tile>*,.entry>*,.faq-item>*{position:relative;z-index:1}
     .chapter .icon{transition:transform .38s cubic-bezier(.22,.61,.36,1)}
     .chapter:hover .icon{transform:translateY(-6px) scale(1.2)}
     .tile .thumb{transition:transform .5s cubic-bezier(.22,.61,.36,1),filter .3s}
@@ -756,7 +756,7 @@
       33%{border-radius:56% 44% 46% 54% / 44% 56% 48% 52%}
       66%{border-radius:48% 52% 56% 44% / 54% 48% 52% 46%}
     }
-    .faq-item{overflow:hidden}
+    .faq-item{position:relative;overflow:hidden}
     @media (prefers-reduced-motion: reduce){.liquid-glow{display:none}}
 
   </style>
@@ -1049,7 +1049,7 @@
     /* ---------- 卡片随滚动进入 / 离开 ---------- */
     if (!reduce && 'IntersectionObserver' in window) {
       var revealEls = Array.prototype.slice.call(
-        document.querySelectorAll('.entry, .tile, .chapter, .sheet, .month, .author, .related, .entry-log')
+        document.querySelectorAll('.entry, .tile, .chapter, .sheet, .month, .author, .related, .entry-log, .faq-item')
       );
       if (revealEls.length) {
         document.body.classList.add('reveal-ready');
