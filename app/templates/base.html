@@ -346,13 +346,33 @@
       position:fixed;left:0;top:0;pointer-events:none;z-index:9999;border-radius:50%;
       transform:translate(-50%,-50%);
     }
-    .cursor-dot{width:5px;height:5px;background:var(--sakura);opacity:.9;transition:opacity .2s}
+    .cursor-dot{
+      width:6px;height:6px;border-radius:50%;background:#ff8a1f;
+      box-shadow:0 0 10px 3px rgba(255,138,31,.8),0 0 26px 10px rgba(255,120,0,.3);
+      z-index:10000;
+    }
     .cursor-ring{
-      width:24px;height:24px;border:1.5px solid var(--sakura);opacity:.5;
+      width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(255,138,31,.9);
+      box-shadow:0 0 14px rgba(255,138,31,.4),inset 0 0 10px rgba(255,138,31,.16);
+      opacity:.75;
       transition:width .18s ease,height .18s ease,border-color .18s ease,opacity .2s;
     }
-    body.cursor-hover .cursor-ring{width:46px;height:46px;border-color:var(--brand);opacity:.9}
+    body.cursor-hover .cursor-ring{
+      width:48px;height:48px;border-color:#ff8a1f;opacity:1;
+      box-shadow:0 0 20px rgba(255,138,31,.55),inset 0 0 12px rgba(255,138,31,.2);
+    }
     body.cursor-hover .cursor-dot{opacity:0}
+    /* 光标尾巴：移动时留下的橙色小光点 */
+    .cursor-tail{
+      position:fixed;width:5px;height:5px;border-radius:50%;background:#ff8a1f;
+      pointer-events:none;z-index:9998;transform:translate(-50%,-50%);
+      box-shadow:0 0 8px 2px rgba(255,138,31,.55);
+      animation:cursorTail .5s ease-out forwards;
+    }
+    @keyframes cursorTail{
+      0%{opacity:.55;transform:translate(-50%,-50%) scale(1)}
+      100%{opacity:0;transform:translate(-50%,-50%) scale(.25)}
+    }
     @media (hover:none),(pointer:coarse){.cursor-dot,.cursor-ring{display:none}}
 
     nav a{position:relative}
@@ -601,10 +621,27 @@
       document.body.appendChild(ring);
       var tx = window.innerWidth / 2, ty = window.innerHeight / 2;
       var rx = tx, ry = ty, shown = false;
+      var lastTrailX = 0, lastTrailY = 0, lastTrailT = 0, trailCount = 0;
       var move = function (e) {
         tx = e.clientX; ty = e.clientY;
         dot.style.transform = 'translate(' + tx + 'px,' + ty + 'px) translate(-50%,-50%)';
         if (!shown) { shown = true; dot.style.opacity = '1'; ring.style.opacity = ''; }
+        /* 尾巴：移动过程中留下会淡出的小橙点 */
+        var now = performance.now();
+        var ddx = e.clientX - lastTrailX, ddy = e.clientY - lastTrailY;
+        if (now - lastTrailT > 26 && ddx * ddx + ddy * ddy > 20 && trailCount < 26) {
+          lastTrailX = e.clientX; lastTrailY = e.clientY; lastTrailT = now;
+          var tail = document.createElement('span');
+          tail.className = 'cursor-tail';
+          tail.style.left = e.clientX + 'px';
+          tail.style.top = e.clientY + 'px';
+          document.body.appendChild(tail);
+          trailCount++;
+          tail.addEventListener('animationend', function () {
+            tail.remove();
+            trailCount--;
+          });
+        }
       };
       document.addEventListener('mousemove', move);
       document.addEventListener('mouseleave', function () { shown = false; dot.style.opacity = '0'; });
