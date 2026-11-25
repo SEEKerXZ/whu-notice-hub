@@ -646,6 +646,20 @@
         tmy = e.clientY / Math.max(VH, 1);
       });
       window.addEventListener('mouseleave', function () { tmx = 0.5; tmy = 0.32; });
+
+      /* 涟漪：鼠标移动的路径上不断荡开波纹 */
+      var ripples = [];
+      var lastX = 0, lastY = 0, lastT = 0;
+      window.addEventListener('mousemove', function (e) {
+        if (reduce) return;
+        var now = performance.now();
+        var dx = e.clientX - lastX, dy = e.clientY - lastY;
+        if (now - lastT < 80) return;
+        if (dx * dx + dy * dy < 2200) return;
+        ripples.push({ x: e.clientX, y: e.clientY, t: now });
+        if (ripples.length > 7) ripples.shift();
+        lastX = e.clientX; lastY = e.clientY; lastT = now;
+      });
       try {
         var c = getComputedStyle(document.documentElement).getPropertyValue('--sakura').trim();
         if (c) dotColor = c;
@@ -658,6 +672,10 @@
         var ox = (smx - 0.5) * 44;
         var oy = (smy - 0.5) * 30;
         var focusX = smx * VW, focusY = smy * VH;
+        var now = performance.now();
+        for (var k = ripples.length - 1; k >= 0; k--) {
+          if (now - ripples[k].t > 1300) ripples.splice(k, 1);
+        }
         ctx.clearRect(0, 0, VW, VH);
         ctx.fillStyle = dotColor;
         var gap = 22;
@@ -668,15 +686,32 @@
             var d = Math.sqrt(dx * dx + dy * dy);
             var near = 1 - d / 230;
             if (near < 0) near = 0;
-            var r = 1.1 + near * 2.1;
-            var base = 0.34 + near * 0.5;
+            /* 涟漪：波前经过时把点向外推，并临时提亮 */
+            var rx = bx, ry = by, boost = 0;
+            for (var k2 = 0; k2 < ripples.length; k2++) {
+              var rp = ripples[k2];
+              var age = (now - rp.t) / 1000;
+              var crest = age * 360;
+              var ddx = bx - rp.x, ddy = by - rp.y;
+              var dr = Math.sqrt(ddx * ddx + ddy * ddy);
+              if (dr < 0.5) continue;
+              var band = 1 - Math.abs(dr - crest) / 66;
+              if (band <= 0) continue;
+              var decay = Math.exp(-age * 1.7);
+              var push = band * 9 * decay;
+              rx += ddx / dr * push;
+              ry += ddy / dr * push;
+              boost += band * 0.6 * decay;
+            }
+            var r = 1.1 + near * 2.1 + boost * 1.6;
+            var base = 0.34 + near * 0.5 + boost;
             var tw = 0.82 + 0.18 * Math.sin(tick * 2 + (x + y) * 0.015);
-            ctx.globalAlpha = Math.min(0.95, base * tw);
-            ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = Math.min(0.97, base * tw);
+            ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
           }
         }
         ctx.globalAlpha = 1;
-        raf = document.hidden ? null : requestAnimationFrame(drawDots);
+        raf = (document.hidden || reduce) ? null : requestAnimationFrame(drawDots);
       };
       document.addEventListener('visibilitychange', function () {
         if (document.hidden) { if (raf) { cancelAnimationFrame(raf); raf = null; } }
