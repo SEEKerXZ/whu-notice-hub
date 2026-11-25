@@ -23,8 +23,8 @@
       --violet:#6b4f9e; --violet-soft:rgba(107,79,158,.14);
       --r-sm:12px; --r-md:18px; --r-lg:24px; --r-pill:999px;
       --shadow:0 1px 0 rgba(60,50,40,.05);
-      --serif:"Songti SC","Noto Serif SC",Georgia,"Times New Roman",serif;
-      --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      --serif:"Songti SC","SimSun","Noto Serif SC",Georgia,"Times New Roman",serif;
+      --sans:"Songti SC","SimSun","Noto Serif SC",Georgia,"Times New Roman",serif;
     }
     /* 四个板块的代表色：进入对应页面时整站主色随之切换 */
     body.page-notices{--sakura:#f0b3c5;--sakura-2:#f7c9d6;--sakura-soft:rgba(240,179,197,.22);--on-sakura:#2a141d;--accent-ink:#b4566c;--dot-color:#e2b3c0}
@@ -808,6 +808,38 @@
       100%{background-position:-90% 0,0 0}
     }
 
+    /* ---------------- 搜索弹层：最近搜索 + 最新通知 ---------------- */
+    .search{position:relative}
+    .search-pop{
+      position:absolute;top:calc(100% + 12px);left:0;right:0;z-index:60;
+      padding:16px 18px 18px;border-radius:22px;
+      background:linear-gradient(150deg,rgba(255,255,255,.74),rgba(255,255,255,.42));
+      border:1px solid rgba(255,255,255,.92);
+      box-shadow:0 26px 64px rgba(90,72,48,.17),inset 0 1px 0 #fff;
+      -webkit-backdrop-filter:blur(18px) saturate(1.35);
+      backdrop-filter:blur(18px) saturate(1.35);
+      animation:popIn .24s cubic-bezier(.22,.61,.36,1) both;
+    }
+    .search-pop[hidden]{display:none}
+    @keyframes popIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+    .sp-sec + .sp-sec{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.75)}
+    .sp-title{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+    .sp-chips{display:flex;flex-wrap:wrap;gap:8px}
+    .sp-chip{
+      border:1px solid rgba(255,255,255,.92);background:rgba(255,255,255,.55);
+      border-radius:999px;padding:5px 14px;font-size:13px;color:var(--ink-2);
+      cursor:pointer;transition:border-color .2s,color .2s,background .2s,transform .2s;
+    }
+    .sp-chip:hover{border-color:var(--accent-ink);color:var(--accent-ink);background:#fff;transform:translateY(-1px)}
+    .sp-empty{color:var(--muted);font-size:13px}
+    .sp-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+    .sp-list li{display:flex;gap:10px;align-items:baseline;font-size:13.5px}
+    .sp-list li a{
+      color:var(--ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .sp-list li a:hover{color:var(--accent-ink)}
+    .sp-list li span{color:var(--muted);font-size:11.5px;white-space:nowrap}
+
   </style>
 </head>
 <body class="{% if request.url.path.startswith('/videos') %}page-videos{% elif request.url.path.startswith('/projects') %}page-projects{% elif request.url.path.startswith('/tools') %}page-tools{% elif request.url.path == '/' %}page-home{% else %}page-notices{% endif %}">
@@ -1263,6 +1295,66 @@
       });
       setTimeout(go, 950);
     }, true);
+  })();
+</script>
+<script>
+  (function () {
+    var form = document.querySelector('.search');
+    var input = form ? form.querySelector('input[name="q"]') : null;
+    var pop = document.getElementById('searchPop');
+    var chips = document.getElementById('recentSearches');
+    if (!form || !input || !pop) return;
+    var KEY = 'wave_recent_searches';
+
+    var readRecent = function () {
+      try {
+        var v = JSON.parse(localStorage.getItem(KEY) || '[]');
+        return Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string' && x.trim(); }) : [];
+      } catch (e) { return []; }
+    };
+    var saveRecent = function (q) {
+      q = (q || '').trim();
+      if (!q) return;
+      var list = readRecent().filter(function (x) { return x !== q; });
+      list.unshift(q);
+      try { localStorage.setItem(KEY, JSON.stringify(list.slice(0, 5))); } catch (e) {}
+    };
+    var renderRecent = function () {
+      if (!chips) return;
+      var list = readRecent();
+      chips.innerHTML = '';
+      if (!list.length) {
+        var em = document.createElement('span');
+        em.className = 'sp-empty';
+        em.textContent = '还没有搜索记录，试试「奖学金」「推免」';
+        chips.appendChild(em);
+        return;
+      }
+      list.forEach(function (q) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'sp-chip';
+        b.textContent = q;
+        b.addEventListener('click', function () {
+          input.value = q;
+          saveRecent(q);
+          form.submit();
+        });
+        chips.appendChild(b);
+      });
+    };
+    var show = function () { renderRecent(); pop.hidden = false; };
+    var hide = function () { pop.hidden = true; };
+
+    input.addEventListener('focus', show);
+    input.addEventListener('click', show);
+    form.addEventListener('submit', function () { saveRecent(input.value); });
+    document.addEventListener('click', function (e) {
+      if (!form.contains(e.target)) hide();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { hide(); input.blur(); }
+    });
   })();
 </script>
 </body>

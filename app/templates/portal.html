@@ -6,9 +6,23 @@
     <div class="kicker">修远Eker的Wave · 本科生信息站</div>
     <h1>今天想看<em>点什么</em>？</h1>
     <p class="lede">通知、视频、项目、工具——四个入口按需进。所有通知只保留标题与概览，正文一律跳原文。</p>
-    <form class="search" method="get" action="/notices">
-      <input type="text" name="q" placeholder="搜索通知，如「奖学金」「推免」…">
+    <form class="search" method="get" action="/notices" autocomplete="off">
+      <input type="text" name="q" id="searchInput" placeholder="搜索通知，如「奖学金」「推免」…" autocomplete="off">
       <button type="submit">搜索</button>
+      <div class="search-pop" id="searchPop" hidden>
+        <div class="sp-sec">
+          <div class="sp-title">最近搜索</div>
+          <div class="sp-chips" id="recentSearches"></div>
+        </div>
+        <div class="sp-sec">
+          <div class="sp-title">最新通知</div>
+          <ul class="sp-list">
+            {% for n in latest %}
+              <li><a href="/notice/{{ n.id }}">{{ n.title }}</a><span>{{ (n.published_at or n.first_seen_at)[5:10] }}</span></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
     </form>
     <div class="date-line">今日新增 {{ overview.today_new }} 条 · 7 天内截止 {{ overview.upcoming }} 条 · 共 {{ total }} 条</div>
   </div>
