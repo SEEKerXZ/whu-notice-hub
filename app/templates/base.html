@@ -530,6 +530,18 @@
     .panel.is-entering{animation:panelIn .4s cubic-bezier(.22,.61,.36,1) both}
     @keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
+    /* 卡片滚动进入 / 离开 */
+    body.reveal-ready .reveal{
+      opacity:0;translate:0 28px;
+      transition:opacity .5s ease, translate .62s cubic-bezier(.22,.61,.36,1),
+                 transform .22s cubic-bezier(.22,.61,.36,1), border-color .22s, box-shadow .22s;
+    }
+    body.reveal-ready .reveal.is-in{opacity:1;translate:0 0}
+    body.reveal-ready .reveal.is-out{opacity:0;translate:0 -18px}
+    @media (prefers-reduced-motion: reduce){
+      body.reveal-ready .reveal{opacity:1 !important;translate:0 0 !important;transition:none !important}
+    }
+
     /* ---------------- 按钮式链接（覆盖层） ---------------- */
     a.tag,.entry .meta a,.crumbs a,footer a,.sec-head .more a,.pager a,.pn a,
     .related li a,.mini a,.dropdown a,.sheet .top a{
@@ -856,42 +868,31 @@
       });
     }
 
-    /* ---------- 平滑滚动：滚动速度跟随滚轮力度（滚得快页面动得快） ---------- */
-    if (!reduce) {
-      var scrollVel = 0, scrollRaf = null, lastFrame = 0;
-      var scrollStep = function (ts) {
-        if (!lastFrame) lastFrame = ts;
-        var dt = Math.min(48, ts - lastFrame);
-        lastFrame = ts;
-        var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-        var y = window.scrollY + scrollVel * (dt / 16.7);
-        if (y <= 0) { y = 0; scrollVel = 0; }
-        if (y >= max) { y = max; scrollVel = 0; }
-        document.documentElement.style.scrollBehavior = 'auto';
-        window.scrollTo({ top: y, behavior: 'auto' });
-        scrollVel *= Math.pow(0.82, dt / 16.7);
-        if (Math.abs(scrollVel) > 0.35) {
-          scrollRaf = requestAnimationFrame(scrollStep);
-        } else {
-          scrollRaf = null;
-          lastFrame = 0;
-          document.documentElement.style.scrollBehavior = '';
-        }
-      };
-      window.addEventListener('wheel', function (e) {
-        if (e.ctrlKey || e.shiftKey || e.deltaMode !== 0) return;
-        if (Math.abs(e.deltaY) < 6) return;
-        e.preventDefault();
-        /* 速度与滚轮力度/频率成正比：滚得越快、越用力，页面滚得越快 */
-        scrollVel += e.deltaY * 0.72;
-        var limit = 52;
-        if (scrollVel > limit) scrollVel = limit;
-        if (scrollVel < -limit) scrollVel = -limit;
-        if (!scrollRaf) {
-          lastFrame = 0;
-          scrollRaf = requestAnimationFrame(scrollStep);
-        }
-      }, { passive: false });
+    /* ---------- 卡片随滚动进入 / 离开 ---------- */
+    if (!reduce && 'IntersectionObserver' in window) {
+      var revealEls = Array.prototype.slice.call(
+        document.querySelectorAll('.entry, .tile, .chapter, .sheet, .month, .author, .related, .entry-log')
+      );
+      if (revealEls.length) {
+        document.body.classList.add('reveal-ready');
+        revealEls.forEach(function (el, i) {
+          el.classList.add('reveal');
+          el.classList.add('is-out');
+          el.style.transitionDelay = ((i % 4) * 0.045).toFixed(3) + 's';
+        });
+        var revealObserver = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) {
+              en.target.classList.remove('is-out');
+              en.target.classList.add('is-in');
+            } else {
+              en.target.classList.remove('is-in');
+              en.target.classList.add('is-out');
+            }
+          });
+        }, { threshold: 0.1, rootMargin: '0px 0px -6% 0px' });
+        revealEls.forEach(function (el) { revealObserver.observe(el); });
+      }
     }
 
     /* ---------- 标签切换 ---------- */
