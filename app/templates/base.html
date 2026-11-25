@@ -6,11 +6,14 @@
   <title>{% block title %}WHU Notice Hub · 武大本科通知{% endblock %}</title>
   <style>
     :root{
-      --paper:#1b211d; --paper-2:#232a25; --card:#272f29;
-      --ink:#f3f0e8; --ink-2:#d9dcd1; --muted:#aab0a2;
-      --rule:#3a433b; --rule-2:#303830;
-      --brand:#8ccbab; --brand-2:#a7dcc0; --brand-soft:#1e3529;
-      --sakura:#f0b3c5; --sakura-2:#f7c9d6; --sakura-soft:#3a2430;
+      --paper:#2b332d; --paper-2:#333c35; --card:#3a443c;
+      --ink:#faf7ee; --ink-2:#e6e9dd; --muted:#bdc3b3;
+      --rule:rgba(255,255,255,.14); --rule-2:rgba(255,255,255,.08);
+      --brand:#98d6b8; --brand-2:#b4e6cb; --brand-soft:rgba(140,203,171,.16);
+      --sakura:#f6c2d1; --sakura-2:#fad4e0; --sakura-soft:rgba(240,179,197,.16);
+      --glass-bg:rgba(255,255,255,.065);
+      --glass-bg-strong:rgba(255,255,255,.10);
+      --glass-border:rgba(255,255,255,.15);
       --on-sakura:#1c1216;
       --pink:#e39aad; --pink-soft:#2a1a1f;
       --gold:#d9b26a; --gold-soft:#241e12;
@@ -34,9 +37,9 @@
     html{scroll-behavior:smooth;color-scheme:dark}
     body{
       margin:0;background:
-        radial-gradient(1000px 460px at 88% -180px, var(--sakura-soft), transparent 62%),
-        radial-gradient(1200px 520px at 30% -260px, var(--brand-soft), transparent 70%),
-        var(--paper);
+        radial-gradient(1100px 520px at 88% -180px, rgba(240,179,197,.18), transparent 62%),
+        radial-gradient(1300px 560px at 26% -260px, rgba(140,203,171,.16), transparent 70%),
+        linear-gradient(180deg, #313a33 0%, #272f2a 55%, #222924 100%);
       color:var(--ink);font-size:16.5px;line-height:1.8;font-family:var(--sans);
       -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
     }
@@ -50,6 +53,9 @@
     ::-webkit-scrollbar-thumb:hover{background:#3a4539}
 
     /* ---------------- 页头 ---------------- */
+    a.tag,.crumbs a,footer a,.sec-head .more a,.pager a,.pn a,.related li a,.mini a,.entry .meta a{
+      -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+    }
     .masthead{
       position:sticky;top:0;z-index:50;
       background:color-mix(in srgb,var(--paper) 90%,transparent);
@@ -529,6 +535,34 @@
     .panel.is-switching{opacity:0;transform:translateY(8px)}
     .panel.is-entering{animation:panelIn .4s cubic-bezier(.22,.61,.36,1) both}
     @keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+    /* ---------------- 玻璃拟态 ---------------- */
+    .chapter,.tile,.entry,.author,.month,.sheet,.faq-item,.tabs,.dropdown,.hero-side,
+    .filters select,.filters input[type=text],.search input{
+      background:var(--glass-bg);
+      border-color:var(--glass-border);
+      -webkit-backdrop-filter:blur(16px) saturate(1.18);
+      backdrop-filter:blur(16px) saturate(1.18);
+    }
+    .hero-side{
+      background:linear-gradient(165deg,rgba(240,179,197,.16),var(--glass-bg) 58%);
+    }
+    .masthead{
+      background:rgba(43,51,45,.62);
+      -webkit-backdrop-filter:blur(18px) saturate(1.25);
+      backdrop-filter:blur(18px) saturate(1.25);
+      border-bottom:1px solid var(--glass-border);
+    }
+    .btn.ghost{
+      background:var(--glass-bg-strong);
+      border-color:var(--glass-border);
+      -webkit-backdrop-filter:blur(14px);
+      backdrop-filter:blur(14px);
+    }
+    .tabs{border-color:var(--glass-border)}
+    .chapter:hover,.tile:hover,.entry:hover,.faq-item[open],.sheet{
+      background:rgba(255,255,255,.085);
+    }
 
     /* ---------------- 常见问题 ---------------- */
     .faq-sec{margin-top:52px}
