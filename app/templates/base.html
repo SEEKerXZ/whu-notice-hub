@@ -326,6 +326,12 @@
     .season{display:none;font-size:12px;color:var(--muted)}
     body.winter .season{display:inline}
     body.winter .kicker::after{content:" · 冬";color:var(--muted);font-weight:400;letter-spacing:.1em}
+    /* 首屏点阵背景（全屏层，顶部清晰、向下渐隐） */
+    .dots-bg{
+      position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.95;
+      -webkit-mask-image:radial-gradient(135% 100% at 50% 0%,#000 0%,rgba(0,0,0,.6) 44%,transparent 78%);
+      mask-image:radial-gradient(135% 100% at 50% 0%,#000 0%,rgba(0,0,0,.6) 44%,transparent 78%);
+    }
     main{position:relative;z-index:1}
     footer{position:relative;z-index:1}
     @media (prefers-reduced-motion: reduce){
@@ -511,6 +517,7 @@
   </style>
 </head>
 <body>
+{% if request.url.path == '/' %}<canvas id="dots" class="dots-bg" aria-hidden="true"></canvas>{% endif %}
 <header class="masthead">
   <div class="shell">
     <a class="brand" href="/"><span class="seal">珈</span><span class="t">WHU Notice Hub</span></a>
@@ -618,53 +625,64 @@
       document.addEventListener('mouseup', function () { ring.style.width = ''; ring.style.height = ''; });
     }
 
-    /* ---------- 首屏点阵：跟随鼠标轻微视差 ---------- */
-    var hero = document.querySelector('.hero-ed');
+    /* ---------- 首屏点阵：全屏背景，跟随鼠标视差 + 光标附近放大 ---------- */
     var canvas = document.getElementById('dots');
-    if (hero && canvas && canvas.getContext) {
+    if (canvas && canvas.getContext) {
       var ctx = canvas.getContext('2d');
-      var dpr = window.devicePixelRatio || 1;
-      var W = 0, H = 0, mx = 0, my = 0, cx = 0, cy = 0, raf = null;
-      var size = function () {
-        W = hero.clientWidth || 1; H = hero.clientHeight || 1;
-        canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var VW = 0, VH = 0;
+      var tmx = 0.5, tmy = 0.32, smx = 0.5, smy = 0.32;
+      var raf = null, tick = 0;
+      var dotColor = '#e7a8ba';
+      var resize = function () {
+        VW = window.innerWidth; VH = window.innerHeight;
+        canvas.width = Math.round(VW * dpr); canvas.height = Math.round(VH * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        if (W > 0 && H > 0) { ctx.canvas.style.width = '100%'; }
       };
-      size();
-      window.addEventListener('resize', size);
-      hero.addEventListener('mousemove', function (e) {
-        var r = hero.getBoundingClientRect();
-        mx = (e.clientX - r.left - W / 2) / W;
-        my = (e.clientY - r.top - H / 2) / H;
+      resize();
+      window.addEventListener('resize', resize);
+      window.addEventListener('mousemove', function (e) {
+        tmx = e.clientX / Math.max(VW, 1);
+        tmy = e.clientY / Math.max(VH, 1);
       });
-      hero.addEventListener('mouseleave', function () { mx = 0; my = 0; });
-      var draw = function () {
-        if (!W || !H) { raf = requestAnimationFrame(draw); return; }
-        cx += (mx * 16 - cx) * 0.05;
-        cy += (my * 16 - cy) * 0.05;
-        ctx.clearRect(0, 0, W, H);
-        var gap = 22, base = Math.max(W, H) * 3;
-        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--sakura').trim() || '#c96f88';
-        for (var x = 12; x < W; x += gap) {
-          for (var y = 12; y < H; y += gap) {
-            var dx = x - W / 2 - cx, dy = y - H / 2 - cy;
+      window.addEventListener('mouseleave', function () { tmx = 0.5; tmy = 0.32; });
+      try {
+        var c = getComputedStyle(document.documentElement).getPropertyValue('--sakura').trim();
+        if (c) dotColor = c;
+      } catch (err) { /* 忽略取色失败 */ }
+
+      var drawDots = function () {
+        tick += 0.008;
+        smx += (tmx - smx) * 0.07;
+        smy += (tmy - smy) * 0.07;
+        var ox = (smx - 0.5) * 44;
+        var oy = (smy - 0.5) * 30;
+        var focusX = smx * VW, focusY = smy * VH;
+        ctx.clearRect(0, 0, VW, VH);
+        ctx.fillStyle = dotColor;
+        var gap = 22;
+        for (var x = 10; x < VW + gap; x += gap) {
+          for (var y = 10; y < VH + gap; y += gap) {
+            var bx = x + ox * 0.45, by = y + oy * 0.45;
+            var dx = x - focusX, dy = y - focusY;
             var d = Math.sqrt(dx * dx + dy * dy);
-            var a = 0.22 - d / base;
-            if (a <= 0) continue;
-            ctx.globalAlpha = a;
-            ctx.beginPath(); ctx.arc(x, y, 1.15, 0, Math.PI * 2); ctx.fill();
+            var near = 1 - d / 230;
+            if (near < 0) near = 0;
+            var r = 1.1 + near * 2.1;
+            var base = 0.34 + near * 0.5;
+            var tw = 0.82 + 0.18 * Math.sin(tick * 2 + (x + y) * 0.015);
+            ctx.globalAlpha = Math.min(0.95, base * tw);
+            ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
           }
         }
         ctx.globalAlpha = 1;
-        if (!document.hidden) raf = requestAnimationFrame(draw);
-        else raf = null;
+        raf = document.hidden ? null : requestAnimationFrame(drawDots);
       };
       document.addEventListener('visibilitychange', function () {
         if (document.hidden) { if (raf) { cancelAnimationFrame(raf); raf = null; } }
-        else if (!raf) { raf = requestAnimationFrame(draw); }
+        else if (!raf) { raf = requestAnimationFrame(drawDots); }
       });
-      raf = requestAnimationFrame(draw);
+      raf = requestAnimationFrame(drawDots);
     }
 
     /* ---------- 卡片倾斜 ---------- */
