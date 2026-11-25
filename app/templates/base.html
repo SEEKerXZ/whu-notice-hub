@@ -693,6 +693,44 @@
       .pn{grid-template-columns:1fr}
       .tiles{grid-template-columns:1fr}
     }
+    /* ---------------- 首页：通透玻璃（少模糊、高透明） ---------------- */
+    body.page-home{position:relative}
+    body.page-home::before{
+      content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+      background:
+        radial-gradient(420px 320px at 10% 16%, rgba(240,179,197,.40), transparent 70%),
+        radial-gradient(400px 300px at 90% 26%, rgba(140,203,171,.32), transparent 70%),
+        radial-gradient(560px 360px at 58% 88%, rgba(255,190,140,.26), transparent 72%);
+    }
+    body.page-home .chapter,
+    body.page-home .hero-side,
+    body.page-home .entry,
+    body.page-home .faq-item{
+      background:linear-gradient(140deg,rgba(255,255,255,.46) 0%,rgba(255,255,255,.15) 48%,rgba(255,255,255,.32) 100%);
+      border:1px solid rgba(255,255,255,.78);
+      box-shadow:0 10px 30px rgba(90,72,48,.07),
+                 inset 0 1px 0 rgba(255,255,255,.95),
+                 inset 0 -1px 0 rgba(255,255,255,.38);
+      -webkit-backdrop-filter:blur(3px) saturate(1.25);
+      backdrop-filter:blur(3px) saturate(1.25);
+    }
+    body.page-home .hero-side{
+      background:linear-gradient(150deg,rgba(240,179,197,.38),rgba(255,255,255,.18) 46%,rgba(255,255,255,.40));
+    }
+    body.page-home .chapter:hover,
+    body.page-home .entry:hover,
+    body.page-home .faq-item[open]{
+      background:linear-gradient(140deg,rgba(255,255,255,.64),rgba(255,255,255,.28) 50%,rgba(255,255,255,.46));
+      border-color:rgba(255,255,255,.98);
+    }
+    /* 玻璃边缘的斜向反光 */
+    body.page-home .chapter::after,
+    body.page-home .entry::after{
+      content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+      background:linear-gradient(115deg,rgba(255,255,255,.5) 0%,transparent 20%,transparent 80%,rgba(255,255,255,.26) 100%);
+      opacity:.55;
+    }
+
   </style>
 </head>
 <body class="{% if request.url.path.startswith('/videos') %}page-videos{% elif request.url.path.startswith('/projects') %}page-projects{% elif request.url.path.startswith('/tools') %}page-tools{% elif request.url.path == '/' %}page-home{% else %}page-notices{% endif %}">
