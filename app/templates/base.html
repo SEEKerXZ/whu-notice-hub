@@ -761,6 +761,17 @@
       border-radius:0 !important;
     }
 
+    /* ---------------- 页面切换：跨文档淡入淡出 ---------------- */
+    @view-transition{navigation:auto}
+    ::view-transition-old(root){animation:vtOut .26s ease both}
+    ::view-transition-new(root){animation:vtIn .3s ease both}
+    @keyframes vtOut{to{opacity:0}}
+    @keyframes vtIn{from{opacity:0}}
+    @keyframes pageIn{from{opacity:.55}to{opacity:1}}
+    @media (prefers-reduced-motion: no-preference){
+      body{animation:pageIn .42s ease both}
+    }
+
   </style>
 </head>
 <body class="{% if request.url.path.startswith('/videos') %}page-videos{% elif request.url.path.startswith('/projects') %}page-projects{% elif request.url.path.startswith('/tools') %}page-tools{% elif request.url.path == '/' %}page-home{% else %}page-notices{% endif %}">
@@ -1179,7 +1190,8 @@
       var go = function () {
         if (done) return;
         done = true;
-        location.href = href;
+        /* 等玻璃铺满后再跳转，浏览器会用 View Transition 做跨文档淡入淡出 */
+        setTimeout(function () { location.href = href; }, 90);
       };
       ov.addEventListener('transitionend', function (ev) {
         if (ev.propertyName === 'width') go();
