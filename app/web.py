@@ -18,6 +18,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config  # noqa: F401  加载 .env
 from . import db, portal, projects
+from .faq import FAQ
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -265,6 +266,7 @@ def portal_home(request: Request):
         "videos": data["videos"],
         "projects": data["projects"],
         "tools": data["tools"],
+        "faq": FAQ,
     })
 
 

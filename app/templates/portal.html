@@ -102,4 +102,19 @@
   </div>
 </section>
 {% endif %}
+
+<section class="sec faq-sec" id="faq">
+  <div class="sec-head">
+    <h2>常见问题</h2>
+    <span class="more">关于本站的 10 个问题</span>
+  </div>
+  <div class="faq">
+    {% for item in faq %}
+      <details class="faq-item">
+        <summary><span class="faq-q">{{ item.q }}</span></summary>
+        <div class="faq-a">{{ item.a }}</div>
+      </details>
+    {% endfor %}
+  </div>
+</section>
 {% endblock %}

@@ -530,8 +530,37 @@
     .panel.is-entering{animation:panelIn .4s cubic-bezier(.22,.61,.36,1) both}
     @keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
-    /* 卡片滚动进入 / 离开 */
-    body.reveal-ready .reveal{
+    /* ---------------- 常见问题 ---------------- */
+    .faq-sec{margin-top:52px}
+    .faq{display:flex;flex-direction:column;gap:10px}
+    .faq-item{
+      border:1px solid var(--rule);border-radius:16px;background:var(--card);
+      padding:0 24px;box-shadow:var(--shadow);
+      transition:border-color .2s,background .2s;
+    }
+    .faq-item[open]{
+      border-color:color-mix(in srgb,var(--sakura) 40%,var(--rule));
+      background:color-mix(in srgb,var(--sakura) 6%,var(--card));
+    }
+    .faq-item summary{
+      list-style:none;cursor:pointer;padding:19px 0;
+      display:flex;align-items:center;gap:14px;
+      font-size:16.5px;font-weight:650;color:var(--ink);
+    }
+    .faq-item summary::-webkit-details-marker{display:none}
+    .faq-item summary::after{
+      content:"+";margin-left:auto;color:var(--sakura);font-size:22px;font-weight:400;
+      line-height:1;transition:transform .28s cubic-bezier(.22,.61,.36,1);
+    }
+    .faq-item[open] summary::after{transform:rotate(45deg)}
+    .faq-q{letter-spacing:.005em}
+    .faq-a{
+      padding:0 0 20px 34px;color:var(--ink-2);font-size:15px;line-height:1.85;
+      animation:faqIn .3s ease both;
+    }
+    @keyframes faqIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+    /* 卡片滚动进入 / 离开 */    body.reveal-ready .reveal{
       opacity:0;translate:0 28px;
       transition:opacity .5s ease, translate .62s cubic-bezier(.22,.61,.36,1),
                  transform .22s cubic-bezier(.22,.61,.36,1), border-color .22s, box-shadow .22s;

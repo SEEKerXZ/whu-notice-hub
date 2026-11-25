@@ -60,6 +60,9 @@ def test_portal_home(client):
     assert "今天想看" in resp.text
     for name in ("通知聚合", "视频推荐", "项目分享", "便捷工具"):
         assert name in resp.text
+    # 页面底部常见问题
+    assert "常见问题" in resp.text
+    assert "这个站点是学校官方的吗" in resp.text
 
 
 def test_portal_subpages(client):
