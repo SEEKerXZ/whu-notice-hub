@@ -782,6 +782,36 @@
       .load-rise{animation:none !important}
     }
 
+    /* ---------------- 输入框：玻璃质感 + 聚焦光泽 ---------------- */
+    .search input,.filters select,
+    .filters input[type=text],.filters input[type=password]{
+      background-image:
+        linear-gradient(115deg,transparent 30%,rgba(255,255,255,.9) 48%,transparent 62%),
+        linear-gradient(150deg,rgba(255,255,255,.62),rgba(255,255,255,.32));
+      background-size:240% 100%,100% 100%;
+      background-position:180% 0,0 0;
+      background-repeat:no-repeat;
+      border:1px solid rgba(255,255,255,.85);
+      box-shadow:0 6px 18px rgba(90,72,48,.06),inset 0 1px 0 rgba(255,255,255,.95);
+      -webkit-backdrop-filter:blur(10px) saturate(1.2);
+      backdrop-filter:blur(10px) saturate(1.2);
+      border-radius:18px;
+      transition:transform .22s ease,box-shadow .25s ease,border-color .25s ease;
+    }
+    .filters select,.filters input[type=text],.filters input[type=password]{border-radius:12px}
+    .search input:focus,.filters select:focus,
+    .filters input[type=text]:focus,.filters input[type=password]:focus{
+      border-color:color-mix(in srgb,var(--accent-ink) 45%,#fff);
+      box-shadow:0 12px 28px color-mix(in srgb,var(--accent-ink) 14%,transparent),
+                 inset 0 1px 0 #fff;
+      outline:none;
+      animation:inputSheen .9s ease both;
+    }
+    @keyframes inputSheen{
+      0%{background-position:180% 0,0 0}
+      100%{background-position:-90% 0,0 0}
+    }
+
   </style>
 </head>
 <body class="{% if request.url.path.startswith('/videos') %}page-videos{% elif request.url.path.startswith('/projects') %}page-projects{% elif request.url.path.startswith('/tools') %}page-tools{% elif request.url.path == '/' %}page-home{% else %}page-notices{% endif %}">
@@ -1075,6 +1105,21 @@
           el.style.setProperty('--mgy', '0px');
         });
       });
+      /* 输入框也做轻微磁吸（聚焦时保持稳定） */
+      Array.prototype.forEach.call(
+        document.querySelectorAll('.search input, .filters select, .filters input[type=text], .filters input[type=password]'),
+        function (el) {
+          el.addEventListener('mousemove', function (e) {
+            if (document.activeElement === el) return;
+            var r = el.getBoundingClientRect();
+            var dx = e.clientX - (r.left + r.width / 2);
+            var dy = e.clientY - (r.top + r.height / 2);
+            el.style.transform = 'translate(' + (dx * 0.05).toFixed(1) + 'px,' + (dy * 0.05).toFixed(1) + 'px)';
+          });
+          el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+          el.addEventListener('focus', function () { el.style.transform = ''; });
+        }
+      );
     }
 
     /* ---------- 卡片随滚动进入 / 离开 ---------- */
