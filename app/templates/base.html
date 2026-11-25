@@ -733,6 +733,19 @@
 
     .faq-item{position:relative}
 
+    /* ---------------- 点击卡片：铺满全屏后跳转 ---------------- */
+    .page-expand{
+      position:fixed;z-index:9990;pointer-events:none;overflow:hidden;
+      transition:left .62s cubic-bezier(.7,0,.2,1),top .62s cubic-bezier(.7,0,.2,1),
+                 width .62s cubic-bezier(.7,0,.2,1),height .62s cubic-bezier(.7,0,.2,1),
+                 border-radius .62s cubic-bezier(.7,0,.2,1);
+      box-shadow:0 30px 90px rgba(60,45,30,.25);
+    }
+    .page-expand.expanded{
+      left:0 !important;top:0 !important;width:100vw !important;height:100vh !important;
+      border-radius:0 !important;
+    }
+
   </style>
 </head>
 <body class="{% if request.url.path.startswith('/videos') %}page-videos{% elif request.url.path.startswith('/projects') %}page-projects{% elif request.url.path.startswith('/tools') %}page-tools{% elif request.url.path == '/' %}page-home{% else %}page-notices{% endif %}">
@@ -1108,6 +1121,56 @@
       el.appendChild(span);
       span.addEventListener('animationend', function () { span.remove(); });
     });
+  })();
+</script>
+<script>
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    var expanding = false;
+    document.addEventListener('click', function (e) {
+      if (expanding) return;
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var el = e.target.closest ? e.target.closest('.chapter, .tile, .btn') : null;
+      if (!el) return;
+      var link = el.tagName === 'A' ? el : el.closest('a');
+      if (!link) return;
+      var href = link.getAttribute('href');
+      if (!href || href.charAt(0) === '#') return;
+      if (/^(mailto:|tel:|javascript:)/i.test(href)) return;
+      if (link.target === '_blank') return;
+      if (href.indexOf('http') === 0 && href.indexOf(location.origin) !== 0) return;
+      if (e.clientX === 0 && e.clientY === 0) return;
+      var r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      e.preventDefault();
+      expanding = true;
+      var cs = getComputedStyle(el);
+      var color = (cs.getPropertyValue('--sec') || cs.getPropertyValue('--sakura') || '#f7c9d6').trim();
+      var ov = document.createElement('div');
+      ov.className = 'page-expand';
+      ov.style.left = r.left + 'px';
+      ov.style.top = r.top + 'px';
+      ov.style.width = r.width + 'px';
+      ov.style.height = r.height + 'px';
+      ov.style.borderRadius = cs.borderRadius || '20px';
+      ov.style.background = 'linear-gradient(150deg,' + color + ' 0%,rgba(255,255,255,.96) 78%)';
+      document.body.appendChild(ov);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { ov.classList.add('expanded'); });
+      });
+      var done = false;
+      var go = function () {
+        if (done) return;
+        done = true;
+        location.href = href;
+      };
+      ov.addEventListener('transitionend', function (ev) {
+        if (ev.propertyName === 'width') go();
+      });
+      setTimeout(go, 950);
+    }, true);
   })();
 </script>
 </body>
