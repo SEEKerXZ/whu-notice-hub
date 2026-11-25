@@ -113,13 +113,14 @@
     .search button:hover{filter:saturate(1.06);box-shadow:0 12px 26px color-mix(in srgb,var(--sakura) 32%,transparent),inset 0 1px 0 rgba(255,255,255,.32)}
 
     /* ---------------- 四个板块（章节目录） ---------------- */
-    .chapters{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--rule);border-radius:22px;overflow:hidden}
+    .chapters{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
     .chapter{
-      padding:20px 20px 22px;border-right:1px solid var(--rule);color:var(--ink);
-      display:flex;flex-direction:column;gap:6px;transition:background .15s;
+      padding:20px 20px 22px;border:1px solid var(--rule);border-radius:20px;background:var(--card);
+      color:var(--ink);display:flex;flex-direction:column;gap:6px;
+      box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.045);
+      transition:border-color .25s,box-shadow .25s,transform .25s;
     }
-    .chapter:last-child{border-right:none}
-    .chapter:hover{background:var(--paper-2);text-decoration:none}
+    .chapter:hover{border-color:var(--sakura);--ty:-4px;box-shadow:0 18px 38px color-mix(in srgb,var(--sakura) 20%,transparent),inset 0 1px 0 rgba(255,255,255,.06);text-decoration:none}
     .chapter .num{font-family:var(--serif);font-size:12px;color:var(--muted);letter-spacing:.12em}
     .chapter .icon{font-size:20px;line-height:1}
     .chapter .name{font-family:var(--serif);font-size:18px;font-weight:700;margin-top:2px}
@@ -257,8 +258,8 @@
 
     /* ---------------- 卡片列表（视频/项目/工具） ---------------- */
     .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:18px}
-    .tile{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:20px;background:var(--card);overflow:hidden;color:var(--ink);box-shadow:var(--shadow);transition:border-color .2s,transform .2s,box-shadow .2s}
-    .tile:hover{border-color:var(--brand);text-decoration:none}
+    .tile{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:22px;background:var(--card);overflow:hidden;color:var(--ink);box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.045);transition:border-color .25s,transform .25s,box-shadow .25s}
+    .tile:hover{border-color:var(--sakura);--ty:-4px;box-shadow:0 18px 38px color-mix(in srgb,var(--sakura) 18%,transparent),inset 0 1px 0 rgba(255,255,255,.06);text-decoration:none}
     .tile .thumb{height:118px;display:grid;place-items:center;font-size:30px;color:var(--paper);background:linear-gradient(135deg,var(--brand),#4c8f72)}
     .tile .thumb.t2{background:linear-gradient(135deg,#b4566c,#8c3d50)}
     .tile .thumb.t3{background:linear-gradient(135deg,#2f7d5f,#1f5c46)}
@@ -366,16 +367,19 @@
     /* 卡片：扫色 + 图标露出 + 倾斜（由 JS 写入 --rx/--ry） */
     .chapter,.tile{
       position:relative;overflow:hidden;will-change:transform;
-      transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+      transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(var(--ty,0px));
       transition:transform .22s cubic-bezier(.22,.61,.36,1),background .25s,border-color .25s,box-shadow .25s;
     }
     .chapter::before,.tile::before{
       content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
-      background:linear-gradient(180deg,var(--sakura-soft),transparent 78%);
-      transform:scaleY(0);transform-origin:bottom;
-      transition:transform .38s cubic-bezier(.22,.61,.36,1);
+      background:radial-gradient(circle at var(--mx,50%) var(--my,50%),
+        color-mix(in srgb,var(--sakura) 26%,transparent) 0%,
+        color-mix(in srgb,var(--sakura) 12%,transparent) 42%,
+        transparent 68%);
+      transform:scale(0);transform-origin:var(--mx,50%) var(--my,50%);
+      opacity:0;transition:transform .5s cubic-bezier(.22,.61,.36,1),opacity .3s;
     }
-    .chapter:hover::before,.tile:hover::before{transform:scaleY(1)}
+    .chapter:hover::before,.tile:hover::before{transform:scale(2.1);opacity:1}
     .chapter>*,.tile>*{position:relative;z-index:1}
     .chapter .icon{transition:transform .38s cubic-bezier(.22,.61,.36,1)}
     .chapter:hover .icon{transform:translateY(-6px) scale(1.2)}
@@ -429,9 +433,7 @@
       .hero-side{border-left:none;padding-left:0;border-top:1px solid var(--rule);padding-top:18px}
       .layout{grid-template-columns:1fr;gap:22px}
       .filters{position:static}
-      .chapters{grid-template-columns:repeat(2,1fr)}
-      .chapter:nth-child(2){border-right:none}
-      .chapter:nth-child(1),.chapter:nth-child(2){border-bottom:1px solid var(--rule)}
+      .chapters{grid-template-columns:repeat(2,1fr);gap:10px}
     }
     @media (max-width:640px){
       .shell{padding:0 18px}
@@ -609,12 +611,20 @@
     /* ---------- 卡片倾斜 ---------- */
     if (!reduce) {
       Array.prototype.forEach.call(document.querySelectorAll('.chapter, .tile'), function (el) {
+        var setOrigin = function (e) {
+          var r = el.getBoundingClientRect();
+          if (!r.width || !r.height) return;
+          el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+          el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+        };
+        el.addEventListener('pointerenter', setOrigin);
         el.addEventListener('mousemove', function (e) {
           var r = el.getBoundingClientRect();
           var px = (e.clientX - r.left) / r.width - 0.5;
           var py = (e.clientY - r.top) / r.height - 0.5;
           el.style.setProperty('--ry', (px * 7).toFixed(2) + 'deg');
           el.style.setProperty('--rx', (-py * 7).toFixed(2) + 'deg');
+          setOrigin(e);
         });
         el.addEventListener('mouseleave', function () {
           el.style.setProperty('--ry', '0deg');
