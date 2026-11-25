@@ -24,7 +24,7 @@ videos:
 
 # 项目分享：仅用于首次初始化导入数据库；之后用「投稿」命令/网页/CLI 管理
 projects:
-  - name: WHU Notice Hub
+  - name: 修远Eker的Wave
     url: https://github.com/SEEKerXZ/whu-notice-hub
     desc: 本站自身：武大本科生通知聚合 + QQ 机器人
     author: 修远Eker

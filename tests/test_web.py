@@ -100,7 +100,7 @@ def test_projects_submit_with_key(client, monkeypatch):
 def test_index_renders(client):
     resp = client.get("/notices")
     assert resp.status_code == 200
-    assert "WHU Notice Hub" in resp.text
+    assert "修远Eker的Wave" in resp.text
     assert "今日新增" in resp.text
     assert "重点通知" in resp.text
 

@@ -95,7 +95,7 @@ def _tag_class(value: object) -> str:
 
 templates.env.filters["tag_class"] = _tag_class
 
-app = FastAPI(title="WHU Notice Hub", version="0.1.0",
+app = FastAPI(title="修远Eker的Wave", version="0.1.0",
               description="武汉大学本科生通知聚合 · 公开只读服务")
 
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
@@ -146,7 +146,7 @@ async def basic_auth(request: Request, call_next):
     return Response(
         status_code=401,
         content="需要登录",
-        headers={"WWW-Authenticate": 'Basic realm="WHU Notice Hub"'},
+        headers={"WWW-Authenticate": 'Basic realm="wave"'},
     )
 
 
@@ -547,7 +547,7 @@ def rss(limit: int = 50) -> Response:
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<rss version="2.0"><channel>'
-        "<title>WHU Notice Hub · 本科生通知</title>"
+        "<title>修远Eker的Wave · 本科生通知</title>"
         "<link>http://localhost/</link>"
         "<description>武汉大学本科生相关通知聚合</description>"
         "<language>zh-CN</language>"

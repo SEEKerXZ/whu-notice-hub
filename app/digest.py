@@ -62,7 +62,7 @@ def build_html(title: str, sections: list[tuple[str, list[sqlite3.Row]]]) -> str
 <body style="margin:0;padding:20px;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:#f9fafb">
   <div style="max-width:640px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px 22px">
     <div style="font-size:18px;font-weight:700">{html.escape(title)}</div>
-    <div style="color:#6b7280;font-size:12px;margin-top:4px">{today} · WHU Notice Hub</div>
+    <div style="color:#6b7280;font-size:12px;margin-top:4px">{today} · 修远Eker的Wave</div>
     {body or '<p style="color:#6b7280;font-size:13px">今天没有新通知。</p>'}
     <div style="color:#9ca3af;font-size:11px;margin-top:24px;border-top:1px solid #e5e7eb;padding-top:10px">
       信息来自武汉大学各公开网站，仅供个人参考，一切以官网原文为准。<br>
