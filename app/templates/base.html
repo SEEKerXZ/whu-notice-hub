@@ -432,6 +432,33 @@
       .cursor-dot,.cursor-ring{display:none !important}
     }
 
+    /* ---------------- 标签切换 ---------------- */
+    .tabs{
+      position:relative;display:inline-flex;gap:4px;flex-wrap:wrap;align-items:center;
+      padding:4px;border-radius:999px;border:1px solid var(--rule);background:var(--card);
+      width:max-content;max-width:100%;margin:0 0 22px;box-shadow:var(--shadow);
+    }
+    .tab{
+      position:relative;z-index:1;display:inline-flex;align-items:center;
+      padding:7px 18px;border-radius:999px;border:none;background:transparent;
+      color:var(--muted);font-size:13px;font-weight:600;font-family:var(--sans);
+      text-decoration:none;transition:color .22s ease;
+    }
+    .tab:hover{color:var(--sakura);text-decoration:none}
+    .tab.active{color:var(--sakura)}
+    .tab-indicator{
+      position:absolute;left:0;top:4px;height:calc(100% - 8px);width:0;border-radius:999px;z-index:0;
+      background:var(--sakura-soft);
+      border:1px solid color-mix(in srgb,var(--sakura) 42%,transparent);
+      box-shadow:0 8px 18px color-mix(in srgb,var(--sakura) 16%,transparent);
+      transform:translateX(0);pointer-events:none;
+      transition:transform .42s cubic-bezier(.22,.61,.36,1),width .42s cubic-bezier(.22,.61,.36,1);
+    }
+    .panel{transition:opacity .16s ease,transform .2s ease}
+    .panel.is-switching{opacity:0;transform:translateY(8px)}
+    .panel.is-entering{animation:panelIn .4s cubic-bezier(.22,.61,.36,1) both}
+    @keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
     /* ---------------- 按钮式链接（覆盖层） ---------------- */
     a.tag,.entry .meta a,.crumbs a,footer a,.sec-head .more a,.pager a,.pn a,
     .related li a,.mini a,.dropdown a,.sheet .top a{
@@ -677,6 +704,54 @@
         el.addEventListener('mouseleave', function () { el.style.transform = ''; });
       });
     }
+
+    /* ---------- 标签切换 ---------- */
+    Array.prototype.forEach.call(document.querySelectorAll('[data-tabs]'), function (tabs) {
+      var indicator = tabs.querySelector('.tab-indicator');
+      var items = Array.prototype.slice.call(tabs.querySelectorAll('.tab'));
+      var current = tabs.querySelector('.tab.active') || items[0];
+      var targetSel = tabs.getAttribute('data-target');
+      var panel = targetSel ? document.querySelector(targetSel) : null;
+      var moveTo = function (el) {
+        if (!indicator || !el) return;
+        var r = el.getBoundingClientRect(), pr = tabs.getBoundingClientRect();
+        indicator.style.width = r.width + 'px';
+        indicator.style.transform = 'translateX(' + (r.left - pr.left) + 'px)';
+      };
+      var kick = function () { requestAnimationFrame(function () { moveTo(current); }); };
+      kick();
+      window.addEventListener('load', kick);
+      window.addEventListener('resize', kick);
+      items.forEach(function (el) {
+        el.addEventListener('mouseenter', function () { moveTo(el); });
+        el.addEventListener('focus', function () { moveTo(el); });
+        el.addEventListener('click', function (e) {
+          if (panel && el.hasAttribute('data-filter')) {
+            e.preventDefault();
+            items.forEach(function (t) { t.classList.toggle('active', t === el); });
+            current = el; moveTo(el);
+            var filter = el.getAttribute('data-filter');
+            panel.classList.add('is-switching');
+            setTimeout(function () {
+              Array.prototype.forEach.call(panel.children, function (child) {
+                var tag = child.getAttribute('data-tag') || '';
+                child.style.display = (filter === 'all' || tag === filter) ? '' : 'none';
+              });
+              panel.classList.remove('is-switching');
+              panel.classList.add('is-entering');
+              setTimeout(function () { panel.classList.remove('is-entering'); }, 440);
+            }, 150);
+          }
+        });
+      });
+      tabs.addEventListener('mouseleave', function () { moveTo(current); });
+    });
+
+    /* ---------- 进入页面时的内容渐入 ---------- */
+    Array.prototype.forEach.call(document.querySelectorAll('.panel'), function (p) {
+      p.classList.add('is-entering');
+      setTimeout(function () { p.classList.remove('is-entering'); }, 520);
+    });
 
     /* ---------- 点击涟漪 ---------- */
     document.addEventListener('pointerdown', function (e) {

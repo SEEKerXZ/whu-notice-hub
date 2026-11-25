@@ -6,9 +6,17 @@
   <p>公开课、系统课、讲座与技术分享，共 {{ videos|length }} 个。先从高数线代开始，后面继续补。</p>
 </div>
 
-<div class="tiles">
+<div class="tabs" data-tabs data-target="#videoGrid">
+  <button class="tab active" type="button" data-filter="all">全部</button>
+  {% for tag in video_tags %}
+    <button class="tab" type="button" data-filter="{{ tag }}">{{ tag }}</button>
+  {% endfor %}
+  <span class="tab-indicator"></span>
+</div>
+
+<div class="tiles panel" id="videoGrid">
   {% for v in videos %}
-    <a class="tile" href="{{ v.url }}" target="_blank" rel="noopener">
+    <a class="tile" href="{{ v.url }}" target="_blank" rel="noopener" data-tag="{{ v.tag or '' }}">
       <div class="thumb t2">▶</div>
       <div class="tb">
         <div class="tt">{{ v.title }}</div>

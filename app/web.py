@@ -276,8 +276,13 @@ def videos_page(request: Request):
         total = db.count_notices(conn)
     finally:
         conn.close()
+    tags: list[str] = []
+    for v in data["videos"]:
+        tag = (v.get("tag") or "").strip()
+        if tag and tag not in tags:
+            tags.append(tag)
     return templates.TemplateResponse(request, "videos.html", {
-        "videos": data["videos"], "total": total,
+        "videos": data["videos"], "video_tags": tags, "total": total,
     })
 
 

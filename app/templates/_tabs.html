@@ -1,0 +1,6 @@
+<div class="tabs" data-tabs data-target="#noticeStream">
+  <a class="tab {% if not filters.level and not filters.deadline %}active{% endif %}" href="/notices">全部</a>
+  <a class="tab {% if filters.level == 'high' %}active{% endif %}" href="/notices?level=high">重点</a>
+  <a class="tab {% if filters.deadline %}active{% endif %}" href="/notices?deadline=1">即将截止</a>
+  <span class="tab-indicator"></span>
+</div>
