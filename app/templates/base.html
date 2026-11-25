@@ -21,6 +21,15 @@
       --serif:"Songti SC","Noto Serif SC",Georgia,"Times New Roman",serif;
       --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
     }
+    /* 四个板块的代表色：进入对应页面时整站主色随之切换 */
+    body.page-notices{--sakura:#f0b3c5;--sakura-2:#f7c9d6;--sakura-soft:#3a2430;--on-sakura:#2a141d}
+    body.page-videos{--sakura:#ffa95c;--sakura-2:#ffc287;--sakura-soft:#3a2a1d;--on-sakura:#2a1706}
+    body.page-projects{--sakura:#bda6ef;--sakura-2:#d2c1f7;--sakura-soft:#2c2438;--on-sakura:#1c142e}
+    body.page-tools{--sakura:#79d9c6;--sakura-2:#9be8d8;--sakura-soft:#1f3531;--on-sakura:#0e2520}
+    /* 二级页卡片缩略图跟随页面主色 */
+    .tile .thumb,.tile .thumb.t2,.tile .thumb.t3,.tile .thumb.t5{
+      background:linear-gradient(135deg,var(--sakura-2),var(--sakura));
+    }
     *{box-sizing:border-box}
     html{scroll-behavior:smooth;color-scheme:dark}
     body{
@@ -114,18 +123,22 @@
 
     /* ---------------- 四个板块（章节目录） ---------------- */
     .chapters{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .chapter{--sec:var(--sakura);--sec-soft:var(--sakura-soft)}
+    .chapter[data-sec="videos"]{--sec:#ffa95c;--sec-soft:#3a2a1d}
+    .chapter[data-sec="projects"]{--sec:#bda6ef;--sec-soft:#2c2438}
+    .chapter[data-sec="tools"]{--sec:#79d9c6;--sec-soft:#1f3531}
     .chapter{
       padding:20px 20px 22px;border:1px solid var(--rule);border-radius:20px;background:var(--card);
       color:var(--ink);display:flex;flex-direction:column;gap:6px;
       box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.045);
       transition:border-color .25s,box-shadow .25s,transform .25s;
     }
-    .chapter:hover{border-color:var(--sakura);--ty:-4px;box-shadow:0 18px 38px color-mix(in srgb,var(--sakura) 20%,transparent),inset 0 1px 0 rgba(255,255,255,.06);text-decoration:none}
+    .chapter:hover{border-color:var(--sec);--ty:-4px;box-shadow:0 18px 38px color-mix(in srgb,var(--sec) 22%,transparent),inset 0 1px 0 rgba(255,255,255,.06);text-decoration:none}
     .chapter .num{font-family:var(--serif);font-size:12px;color:var(--muted);letter-spacing:.12em}
     .chapter .icon{font-size:24px;line-height:1}
     .chapter .name{font-family:var(--serif);font-size:21px;font-weight:700;margin-top:2px}
     .chapter .desc{font-size:14px;color:var(--muted);line-height:1.6}
-    .chapter .count{font-size:13.5px;color:var(--sakura);margin-top:auto;padding-top:8px;font-variant-numeric:tabular-nums}
+    .chapter .count{font-size:13.5px;color:var(--sec);margin-top:auto;padding-top:8px;font-variant-numeric:tabular-nums}
 
     /* ---------------- 通知流（日期栏） ---------------- */
     .layout{display:grid;grid-template-columns:280px 1fr;gap:42px;align-items:start;margin-top:6px}
@@ -403,8 +416,8 @@
     .chapter::before,.tile::before{
       content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
       background:radial-gradient(circle at var(--mx,50%) var(--my,50%),
-        color-mix(in srgb,var(--sakura) 48%,transparent) 0%,
-        color-mix(in srgb,var(--sakura) 26%,transparent) 40%,
+        color-mix(in srgb,var(--sec,var(--sakura)) 52%,transparent) 0%,
+        color-mix(in srgb,var(--sec,var(--sakura)) 28%,transparent) 40%,
         transparent 72%);
       transform:scale(0);transform-origin:var(--mx,50%) var(--my,50%);
       opacity:0;transition:transform .5s cubic-bezier(.22,.61,.36,1),opacity .3s;
@@ -416,8 +429,8 @@
     .tile .thumb{transition:transform .5s cubic-bezier(.22,.61,.36,1),filter .3s}
     .tile:hover .thumb{transform:scale(1.045);filter:saturate(1.12)}
     .chapter .num{
-      width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--rule);
-      border-radius:50%;font-size:12.5px;background:var(--card);
+      width:30px;height:30px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--sec) 42%,var(--rule));
+      border-radius:50%;font-size:12.5px;background:var(--card);color:var(--sec);
     }
 
     /* 小圆点加圆圈 */
@@ -536,7 +549,7 @@
     }
   </style>
 </head>
-<body>
+<body class="{% if request.url.path.startswith('/videos') %}page-videos{% elif request.url.path.startswith('/projects') %}page-projects{% elif request.url.path.startswith('/tools') %}page-tools{% elif request.url.path == '/' %}page-home{% else %}page-notices{% endif %}">
 <canvas id="dots" class="dots-bg" aria-hidden="true"></canvas>
 <header class="masthead">
   <div class="shell">
@@ -700,7 +713,7 @@
         lastX = e.clientX; lastY = e.clientY; lastT = now;
       });
       try {
-        var c = getComputedStyle(document.documentElement).getPropertyValue('--sakura').trim();
+        var c = getComputedStyle(document.body).getPropertyValue('--sakura').trim();
         if (c) dotColor = c;
       } catch (err) { /* 忽略取色失败 */ }
 
