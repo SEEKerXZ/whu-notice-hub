@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% block title %}投稿项目 · 修远Eker的Wave{% endblock %}
+{% block title %}记录项目 · 修远Eker的Wave{% endblock %}
 {% block content %}
 <div class="page-top">
-  <div class="kicker">Submit · 投稿</div>
-  <h1>投稿一个项目</h1>
-  <p>填链接即可，GitHub 仓库会自动读取名称和简介。</p>
+  <div class="kicker">Submit · 记录</div>
+  <h1>记录一个项目</h1>
+  <p>填链接即可，GitHub 仓库会自动读取名称和简介（仅自己记录用）。</p>
 </div>
 
 {% if closed %}
   <div class="prose">
-    <p>网页投稿暂未开放。可以到 QQ 群里发：<code>@通通 投稿 &lt;链接&gt;</code></p>
+    <p>网页记录暂未开放。可以在 QQ 里发：<code>@通通 投稿 &lt;链接&gt;</code></p>
     <p><a class="btn ghost" href="/projects">返回项目列表</a></p>
   </div>
 {% else %}

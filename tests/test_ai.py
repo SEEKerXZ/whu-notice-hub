@@ -166,7 +166,7 @@ def test_mixed_mode_answers_general_question(conn, monkeypatch):
     text = ai.answer("解释一下什么是动态规划")
     assert "动态规划" in text
     # 混合模式使用宽松提示词
-    assert "也可以和大家闲聊" in _Client.payload["messages"][0]["content"]
+    assert "也可以闲聊" in _Client.payload["messages"][0]["content"]
 
 
 def test_answer_without_llm_falls_back(conn, monkeypatch):

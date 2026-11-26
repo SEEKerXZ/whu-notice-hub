@@ -3,7 +3,7 @@
 <div class="page-top">
   <div class="kicker">Projects · 项目分享</div>
   <h1>项目分享</h1>
-  <p>同学做的项目、课程设计、开源作品，共 {{ projects|length }} 个。投稿一条链接即可，会自动抓取仓库信息。</p>
+  <p>自己收藏的一些项目和链接，共 {{ projects|length }} 个；记录时填一条链接即可，会自动抓取仓库信息。</p>
 </div>
 
 <div class="tiles">
@@ -27,11 +27,11 @@
 {% endif %}
 
 <section class="sec">
-  <div class="sec-head"><h2>如何投稿</h2><span class="more">两种方式</span></div>
+  <div class="sec-head"><h2>如何记录</h2><span class="more">两种方式</span></div>
   <div class="prose">
     <ol>
-      <li><strong>QQ 群</strong>：<code>@通通 投稿 &lt;链接&gt; 一句话介绍</code>，机器人抓取仓库信息后自动收录</li>
-      {% if submit_open %}<li><strong>网页</strong>：<a href="/projects/new">打开投稿表单 →</a></li>{% endif %}
+      <li><strong>QQ</strong>：<code>@通通 投稿 &lt;链接&gt; 一句话介绍</code>（个人机器人），抓取仓库信息后自动记录</li>
+      {% if submit_open %}<li><strong>网页</strong>：<a href="/projects/new">打开记录表单 →</a></li>{% endif %}
     </ol>
     <p style="font-size:12.5px;color:var(--muted)">支持 GitHub / Gitee 等任意 http(s) 链接；同一链接只会收录一次。</p>
   </div>

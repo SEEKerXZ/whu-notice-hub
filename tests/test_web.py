@@ -62,7 +62,7 @@ def test_portal_home(client):
         assert name in resp.text
     # 页面底部常见问题
     assert "常见问题" in resp.text
-    assert "这个站点是学校官方的吗" in resp.text
+    assert "这个站点是干什么的" in resp.text
 
 
 def test_portal_subpages(client):

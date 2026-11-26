@@ -102,7 +102,7 @@ templates.env.globals["latest_version"] = _CHANGELOG[0]["version"]
 templates.env.globals["update_notes"] = _CHANGELOG[0]["changes"]
 
 app = FastAPI(title="修远Eker的Wave", version="0.1.0",
-              description="武汉大学本科生通知聚合 · 公开只读服务")
+              description="个人自用的武大通知整理小站")
 
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
 _hits: dict[str, list[float]] = defaultdict(list)
@@ -582,9 +582,9 @@ def rss(limit: int = 50) -> Response:
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<rss version="2.0"><channel>'
-        "<title>修远Eker的Wave · 本科生通知</title>"
+        "<title>修远Eker的Wave · 我的通知</title>"
         "<link>http://localhost/</link>"
-        "<description>武汉大学本科生相关通知聚合</description>"
+        "<description>个人自用的武大通知整理与收藏</description>"
         "<language>zh-CN</language>"
         + "".join(entries) +
         "</channel></rss>"

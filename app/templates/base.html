@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}修远Eker的Wave · 武大本科通知{% endblock %}</title>
+  <title>{% block title %}修远Eker的Wave · 个人自用{% endblock %}</title>
   <style>
     :root{
       --paper:#faf7ef; --paper-2:#f3eee1; --card:#fffdf8;
@@ -1118,7 +1118,7 @@
 <footer>
   <div class="shell">
     <span>© 2026 修远Eker的Wave</span>
-    <span>数据来自武汉大学各公开网站，仅收录本科生相关通知</span>
+    <span>个人自用 · 数据来自武汉大学各公开网站</span>
     <span style="margin-left:auto">
       <a href="/about">关于</a> · <a href="/changelog">更新日志</a> · <a href="/archive">归档</a>
     </span>
@@ -1613,7 +1613,7 @@
     <button class="um-close" type="button" aria-label="关闭">×</button>
     <div class="kicker">What's New · 大版本更新</div>
     <h2>版本 {{ latest_version }}</h2>
-    <p class="um-sub">这次是整站视觉与交互的大版本重做，欢迎体验：</p>
+    <p class="um-sub">这次是整站视觉与交互的大版本重做：</p>
     <ul class="um-list">
       {% for item in update_notes %}<li>{{ item }}</li>{% endfor %}
     </ul>
