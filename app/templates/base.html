@@ -1160,55 +1160,112 @@
     var dotRipples = [];
     var lastMoveX = 0, lastMoveY = 0, lastMoveT = 0;
 
-    /* ---------- 自定义光标：小点 + 跟随圆圈 ---------- */
+    /* ---------- 自定义光标：小点 + 跟随圆圈（按需渲染，空闲时不占 CPU） ---------- */
     if (fine && !reduce) {
       var dot = document.createElement('div');
       dot.className = 'cursor-dot';
+      dot.style.opacity = '0';
       var ring = document.createElement('div');
       ring.className = 'cursor-ring';
+      ring.style.opacity = '0';
       document.body.appendChild(dot);
       document.body.appendChild(ring);
-      var tx = window.innerWidth / 2, ty = window.innerHeight / 2;
-      var rx = tx, ry = ty, shown = false;
-      var lastTrailX = 0, lastTrailY = 0, lastTrailT = 0, trailCount = 0;
-      var move = function (e) {
-        tx = e.clientX; ty = e.clientY;
-        dot.style.transform = 'translate(' + tx + 'px,' + ty + 'px) translate(-50%,-50%)';
-        if (!shown) { shown = true; dot.style.opacity = '1'; ring.style.opacity = ''; }
-        /* 尾巴：移动过程中留下会淡出的小橙点 */
-        var now = performance.now();
-        var ddx = e.clientX - lastTrailX, ddy = e.clientY - lastTrailY;
-        if (now - lastTrailT > 34 && ddx * ddx + ddy * ddy > 30 && trailCount < 18) {
-          lastTrailX = e.clientX; lastTrailY = e.clientY; lastTrailT = now;
-          var tail = document.createElement('span');
-          tail.className = 'cursor-tail';
-          tail.style.left = e.clientX + 'px';
-          tail.style.top = e.clientY + 'px';
-          document.body.appendChild(tail);
-          trailCount++;
-          tail.addEventListener('animationend', function () {
-            tail.remove();
-            trailCount--;
-          });
+
+      var hoverSel = 'a,button,select,input,textarea,label,.chapter,.tile,.term,.thumb,.sheet';
+      var tx = -1, ty = -1;
+      var rx = 0, ry = 0;
+      var rafId = null;
+      var shown = false;
+      var lastTrailX = 0, lastTrailY = 0, lastTrailT = 0;
+
+      /* 尾巴元素池，避免频繁创建/销毁 DOM */
+      var TAIL_MAX = 16;
+      var tails = [];
+      for (var ti = 0; ti < TAIL_MAX; ti++) {
+        var tEl = document.createElement('span');
+        tEl.className = 'cursor-tail';
+        tEl.style.opacity = '0';
+        tEl.style.animation = 'none';
+        document.body.appendChild(tEl);
+        tails.push({ el: tEl, free: true });
+      }
+      var trailCursor = 0;
+      var spawnTrail = function (x, y) {
+        for (var i = 0; i < TAIL_MAX; i++) {
+          var item = tails[(trailCursor + i) % TAIL_MAX];
+          if (!item.free) continue;
+          item.free = false;
+          trailCursor = (trailCursor + i + 1) % TAIL_MAX;
+          item.el.style.left = x + 'px';
+          item.el.style.top = y + 'px';
+          item.el.style.animation = 'none';
+          void item.el.offsetWidth;   /* 强制重排以重启动画 */
+          item.el.style.animation = '';
+          item.el.style.opacity = '';
+          window.setTimeout(function () { item.free = true; }, 380);
+          return;
         }
       };
-      document.addEventListener('mousemove', move);
-      document.addEventListener('mouseleave', function () { shown = false; dot.style.opacity = '0'; });
-      (function loop() {
-        rx += (tx - rx) * 0.55;
-        ry += (ty - ry) * 0.55;
-        ring.style.transform = 'translate(' + rx + 'px,' + ry + 'px) translate(-50%,-50%)';
-        requestAnimationFrame(loop);
-      })();
-      var hoverSel = 'a,button,select,input,textarea,label,.chapter,.tile,.term,.thumb,.sheet';
-      document.addEventListener('mouseover', function (e) {
+
+      /* 每帧只在需要时执行；圆环追上目标后自动停止 rAF */
+      var render = function () {
+        rafId = null;
+        if (tx < 0) return;
+        var dx = tx - rx, dy = ty - ry;
+        if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) {
+          rx = tx; ry = ty;
+        } else {
+          rx += dx * 0.55;
+          ry += dy * 0.55;
+        }
+        dot.style.transform = 'translate3d(' + tx + 'px,' + ty + 'px,0) translate(-50%,-50%)';
+        ring.style.transform = 'translate3d(' + rx + 'px,' + ry + 'px,0) translate(-50%,-50%)';
+        if (Math.abs(tx - rx) > 0.2 || Math.abs(ty - ry) > 0.2) {
+          rafId = requestAnimationFrame(render);
+        }
+      };
+      var wake = function () {
+        if (rafId === null) rafId = requestAnimationFrame(render);
+      };
+
+      document.addEventListener('mousemove', function (e) {
+        tx = e.clientX; ty = e.clientY;
+        if (!shown) {
+          shown = true;
+          dot.style.opacity = '1';
+          ring.style.opacity = '';
+        }
+        wake();
+        var now = performance.now();
+        var ddx = tx - lastTrailX, ddy = ty - lastTrailY;
+        if (now - lastTrailT > 40 && ddx * ddx + ddy * ddy > 40) {
+          lastTrailX = tx; lastTrailY = ty; lastTrailT = now;
+          spawnTrail(tx, ty);
+        }
+      }, { passive: true });
+
+      document.addEventListener('mouseleave', function () {
+        shown = false;
+        dot.style.opacity = '0';
+        ring.style.opacity = '0';
+      });
+
+      document.addEventListener('pointerover', function (e) {
         if (e.target.closest && e.target.closest(hoverSel)) document.body.classList.add('cursor-hover');
-      });
-      document.addEventListener('mouseout', function (e) {
+      }, { passive: true });
+      document.addEventListener('pointerout', function (e) {
         if (e.target.closest && e.target.closest(hoverSel)) document.body.classList.remove('cursor-hover');
-      });
+      }, { passive: true });
+
       document.addEventListener('mousedown', function () { ring.style.width = '14px'; ring.style.height = '14px'; });
       document.addEventListener('mouseup', function () { ring.style.width = ''; ring.style.height = ''; });
+
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden && rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      });
     }
 
     /* ---------- 首屏点阵：全屏背景，跟随鼠标视差 + 光标附近放大 ---------- */
